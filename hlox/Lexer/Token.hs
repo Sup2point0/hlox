@@ -2,7 +2,8 @@ module Lexer.Token where
 
   
 data LexToken =
-      SEMICOLON
+      IGNORE
+    | SEMICOLON
 
     | LPAREN | RPAREN
     | LBRACE | RBRACE
@@ -14,9 +15,13 @@ data LexToken =
     | GT | GTEQ
     | LT | LTEQ
     
-    | IDENT | STR | NUM
+    | IDENT String
+    | STR String
+    | NUM Float
 
     | AND | CLASS | ELSE | FALSE | FUN | FOR | IF | NIL | OR | PRINT | RETURN | SUPER | THIS | TRUE | VAR | WHILE
+  deriving (Eq, Show)
 
-    | EOF
-  deriving Eq
+
+ignored :: LexToken -> Bool
+ignored = (== IGNORE)
