@@ -4,7 +4,7 @@ import Test.Tasty
 
 import Util.Syntax
 
-import Parser
+import Hlox (parse)
 import Parser.Ast
 import Parser.Ops qualified as Op
 

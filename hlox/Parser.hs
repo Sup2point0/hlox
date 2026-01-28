@@ -4,7 +4,7 @@ import Data.Either qualified as Either
 import Data.List qualified as List
 
 import Parser.Ast qualified as Ast
-import Parser.Ast (Expr)
+import Parser.Ast (Program, Expr)
 import Parser.Ops qualified as Op
 import Parser.Ops (Op2)
 import Parser.Errors qualified as Err
@@ -19,9 +19,12 @@ import Lexer.Tokens (LexToken)
 type Parser r = [LexToken] -> Either ParseError ([LexToken], r)
 
 
+parseProgram :: Parser Program
+parseProgram = parseExpr
+
 parseExpr :: Parser Expr
 parseExpr = parseEquality
-  -- where
+
 parseEquality :: Parser Expr
 parseEquality tokens = do
     (tokens', left) <- parseComparison tokens
