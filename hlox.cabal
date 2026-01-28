@@ -16,7 +16,7 @@ library
         Lexer.Tokens,
         Lexer.Errors,
         Parser,
-        Parser.Nodes,
+        Parser.Ast,
         Parser.Ops,
         Parser.Errors,
     other-modules:
