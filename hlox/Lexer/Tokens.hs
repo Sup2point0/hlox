@@ -1,4 +1,4 @@
-module Lexer.Token where
+module Lexer.Tokens where
 
   
 data LexToken =
@@ -12,8 +12,8 @@ data LexToken =
 
     | NEQ
     | EQ | EQQ
-    | GT | GTEQ
     | LT | LTEQ
+    | GT | GTEQ
     
     | IDENT String
     | STR String

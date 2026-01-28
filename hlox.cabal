@@ -11,10 +11,14 @@ common warnings
 
 library
     import:           warnings
-    exposed-modules:  Hlox, Lexer
+    exposed-modules:  Hlox, Lexer, Parser
     other-modules:
-        Lexer.Token
-        Lexer.Helpers
+        Lexer.Tokens,
+        Lexer.Helpers,
+        Parser.Nodes,
+        Parser.Ops,
+        Parser.Errors,
+        Parser.Helpers,
     build-depends:    base ^>=4.18.3.0
     hs-source-dirs:   hlox
     default-language: GHC2021

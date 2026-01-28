@@ -5,8 +5,8 @@ import Data.Char
 import Data.Either qualified as Either
 import Control.Applicative
 
-import Lexer.Token qualified as Tk
-import Lexer.Token (LexToken)
+import Lexer.Tokens qualified as Tk
+import Lexer.Tokens (LexToken)
 import Lexer.Helpers
 
 
@@ -18,7 +18,7 @@ type LexResult = Either [LexError] [LexToken]
 
 
 data Lexer r = Lexer {
-    tryLex :: String -> [(r, String)]
+    lex :: String -> [(r, String)]
   }
   deriving Functor
 
@@ -29,8 +29,8 @@ instance Applicative Lexer where
   liftA2 :: (r -> s -> t) -> Lexer r -> Lexer s -> Lexer t
   liftA2 f p q
     = Lexer (\str ->
-        [(f r s, x') | (r, x)  <- tryLex p str
-                     , (s, x') <- tryLex q x
+        [(f r s, x') | (r, x)  <- lex p str
+                     , (s, x') <- lex q x
                      ]
       )
 
@@ -39,13 +39,13 @@ instance Alternative Lexer where
   empty = Lexer (const [])
 
   (<|>) :: Lexer r -> Lexer r -> Lexer r
-  p <|> q = Lexer (\str -> tryLex p str ++ tryLex q str)
+  p <|> q = Lexer (\str -> lex p str ++ lex q str)
 
 infixl 1 <|
 (<|) :: Lexer r -> Lexer r -> Lexer r
 p <| q = Lexer (\str ->
-    case tryLex p str of
-      []  -> tryLex q str
+    case lex p str of
+      []  -> lex q str
       res -> res
   )
 
@@ -134,12 +134,12 @@ loxLexer :: Lexer LexResult
 loxLexer = fromFallibles <$> program
 
 
-lex :: String -> LexResult
-lex prog
+tokenise :: String -> LexResult
+tokenise prog
   | [] <- validLexes = head invalidLexes
   | otherwise        = cleanupLex $ head validLexes
   where
-    fullLexes = [res | (res, "") <- tryLex loxLexer prog]
+    fullLexes = [res | (res, "") <- lex loxLexer prog]
     validLexes = filter Either.isRight fullLexes
     invalidLexes = filter Either.isLeft fullLexes
 
