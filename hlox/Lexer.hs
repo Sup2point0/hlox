@@ -91,10 +91,10 @@ token =
   <| Right Tk.DOT   <$ char '.'
   <| Right Tk.PLUS  <$ char '+'
   <| Right Tk.MINUS <$ char '-'
-  <| Right Tk.MULT  <$ char '*'
+  <| Right Tk.STAR  <$ char '*'
   <| Right Tk.SLASH <$ char '/'
   
-  <| Right Tk.NEQ  <$ char '!'
+  <| Right Tk.NEQ  <$ string "!="
   <| Right Tk.BANG <$ char '!'
   <| Right Tk.EQQ  <$ string "=="
   <| Right Tk.LTEQ <$ string "=<"

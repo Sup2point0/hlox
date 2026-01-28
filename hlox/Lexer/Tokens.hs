@@ -8,7 +8,7 @@ data LexToken =
     | LPAREN | RPAREN
     | LBRACE | RBRACE
     | COMMA | DOT | BANG
-    | PLUS | MINUS | MULT | SLASH
+    | PLUS | MINUS | STAR | SLASH
 
     | NEQ
     | EQ | EQQ
