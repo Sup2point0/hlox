@@ -12,6 +12,7 @@ common warnings
 library
     import:           warnings
     exposed-modules:
+        Hlox,
         Lexer,
         Lexer.Tokens,
         Lexer.Errors,
@@ -19,6 +20,9 @@ library
         Parser.Ast,
         Parser.Ops,
         Parser.Errors,
+        Evaluator,
+        Evaluator.Objects,
+        Evaluator.Errors,
     other-modules:
         Lexer.Helpers,
         Parser.Helpers,
