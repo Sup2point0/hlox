@@ -1,9 +1,11 @@
 module Parser where
 
+import Lexer qualified
 import Lexer.Tokens qualified as Tk
 import Lexer.Tokens (LexToken)
+import Lexer.Errors (LexError)
 import Parser.Nodes qualified as Ex
-import Parser.Nodes (Expr)
+import Parser.Nodes (Program, Expr)
 import Parser.Ops qualified as Op
 import Parser.Errors qualified as Err
 import Parser.Errors (ParseError)
@@ -72,3 +74,25 @@ parseExpr = parseEquality
     parseAtom ((Tk.STR str):ts) = Right (ts, Ex.Str str)
     parseAtom ((Tk.NUM n)  :ts) = Right (ts, Ex.Num n)
     parseAtom _ = Left (Err.GeneralError)
+
+
+type CompileError = Either [LexError] ParseError
+
+parse :: String -> Either CompileError Program
+parse input = do
+  tokens <- tryLex input
+  out <- tryParse tokens
+  return out
+  where
+    tryLex :: String -> Either CompileError [LexToken]
+    tryLex src
+      = case Lexer.tokenise src of
+          Left err   -> Left (Left err)
+          Right toks -> Right toks
+
+    tryParse :: [LexToken] -> Either CompileError Program
+    tryParse toks
+      = case parseExpr toks of
+          Left err          -> Left (Right err)
+          Right ([], prog)  -> Right prog
+          Right (res, _)    -> Left (Right (Err.UnparsedInput res))

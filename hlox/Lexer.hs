@@ -7,11 +7,10 @@ import Control.Applicative
 
 import Lexer.Tokens qualified as Tk
 import Lexer.Tokens (LexToken)
+import Lexer.Errors qualified as Err
+import Lexer.Errors (LexError)
 import Lexer.Helpers
 
-
-data LexError = LexErr String
-  deriving Show
 
 type LexOutput = Either LexError LexToken
 type LexResult = Either [LexError] [LexToken]
@@ -125,7 +124,7 @@ token =
   <| Right . Tk.NUM . read @Float <$> ((:) <$> digit <*> many (digit <|> char '.'))
   <| Right . Tk.IDENT <$> ((:) <$> (letter <|> char '_') <*> many (letter <|> digit <|> char '_'))
 
-  <| Left (LexErr "Unrecognised character") <$ anyChar
+  <| Left . Err.UnknownChar <$> anyChar
 
 program :: Lexer [LexOutput]
 program = many token
