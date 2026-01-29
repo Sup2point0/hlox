@@ -36,4 +36,7 @@ testEval = testCollection "eval"
 
   , Either.isLeft (evalProgram (parse "5 + nil != 1"))
     === True
+
+  , evalProgram (parse "1 + 2; nil == nil")
+    === Right (Obj.Boolean True)
   ]

@@ -21,19 +21,20 @@ type Parser r = [LexToken] -> Either ParseError ([LexToken], r)
 
 
 parseProgram :: Parser Program
-parseProgram tokens = do
-  (tokens', stmt) <- parseStmt tokens
-  case tokens' of
-    [] -> return $ ([], Maybe.maybeToList (child stmt))
-    _  -> parse' [stmt] tokens'
+parseProgram = parse' []
   where
     parse' :: Program -> Parser Program
-    parse' acc [] = Right ([], reverse acc)
     parse' acc tokens = do
       (tokens', stmt) <- parseStmt tokens
+      -- Yeah pretty messy, wish GHC didn't care about indentation so much...
       let
         acc' = stmt:acc
         in case tokens' of
+          [Tk.SEMICOLON] -> Right ([], reverse acc')
+          []             -> Right ([], case acc' of
+                                [stmt'] -> Maybe.maybeToList (child stmt')
+                                _       -> reverse acc'
+                              )
           (Tk.SEMICOLON:ts') -> parse' acc' ts'
           _                  -> Left (Err.UnparsedInput tokens')
 

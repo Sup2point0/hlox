@@ -14,6 +14,7 @@ testParser =
   [
     testParseAtom
   , testParseExpr
+  , testParseProgram
   ]
 
 testParseAtom :: TestTree
@@ -61,5 +62,17 @@ testParseExpr = testCollection "parseExpr"
           (Unary Op.NEGATE (Num 5))
           (Binary Op.ADD (Num 4) (Num 1))
         )
+    ]
+  ]
+
+testParseProgram :: TestTree
+testParseProgram = testCollection "parseProgram"
+  [
+    parse "1 + 2; nil;"
+    === Right [
+      Stmt (
+        Binary Op.ADD (Num 1.0) (Num 2.0)
+      )
+    , Stmt Nil
     ]
   ]

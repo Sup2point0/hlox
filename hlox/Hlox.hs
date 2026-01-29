@@ -21,7 +21,7 @@ parse input = do
     tryLex :: String -> Either Error [LexToken]
     tryLex src
       = case Lexer.tokenise src of
-          Left err   -> Left (LexErr err)
+          Left err     -> Left (LexErr err)
           Right tokens -> Right tokens
 
     tryParse :: [LexToken] -> Either Error Program
