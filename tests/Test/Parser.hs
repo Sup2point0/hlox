@@ -19,33 +19,33 @@ testParser =
 testParseAtom :: TestTree
 testParseAtom = testCollection "parseAtom"
   [
-    parse "0" === Right (Num 0)
+    parse "0" === Right [Num 0]
   ]
 
 testParseExpr :: TestTree
 testParseExpr = testCollection "parseExpr"
   [
-    parse "0 == 1" === Right (Binary Op.EQ (Num 0) (Num 1))
+    parse "0 == 1" === Right [Binary Op.EQ (Num 0) (Num 1)]
 
   -- precedence
   , parse "1 + 2 == 3"
-    === Right (
+    === Right [
       Binary Op.EQ
         (Binary Op.ADD (Num 1) (Num 2))
         (Num 3)
-    )
+    ]
 
   -- associativity
   , parse "1 + 2 + 3"
-    === Right (
+    === Right [
       Binary Op.ADD
         (Binary Op.ADD (Num 1) (Num 2))
         (Num 3)
-    )
+    ]
 
   -- complex
   , parse "((6 / 3) - 1 + 10) != (-5 =< 4 + 1)"
-    === Right (
+    === Right [
       Binary Op.NEQ
         (Binary Op.ADD
           (Binary Op.SUBTRACT
@@ -61,5 +61,5 @@ testParseExpr = testCollection "parseExpr"
           (Unary Op.NEGATE (Num 5))
           (Binary Op.ADD (Num 4) (Num 1))
         )
-    )
+    ]
   ]

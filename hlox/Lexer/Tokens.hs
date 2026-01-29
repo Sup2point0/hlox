@@ -3,6 +3,7 @@ module Lexer.Tokens where
   
 data LexToken =
       IGNORE
+    | EOF
     | SEMICOLON
 
     | LPAREN | RPAREN

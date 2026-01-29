@@ -13,7 +13,7 @@ import Evaluator.Objects qualified as Obj
 
 
 parse :: String -> Program
-parse = Either.fromRight Nil . Hlox.parse
+parse = Either.fromRight [] . Hlox.parse
 
 
 testEvaluator :: [TestTree]
@@ -25,15 +25,15 @@ testEvaluator =
 testEval :: TestTree
 testEval = testCollection "eval"
   [
-    eval (parse "1 + 2")
+    evalProgram (parse "1 + 2")
     === Right (Obj.Number 3.0)
 
-  , eval (parse "1 + 2 == 3")
+  , evalProgram (parse "1 + 2 == 3")
     === Right (Obj.Boolean True)
 
-  , eval (parse "10 / 2 >= 5")
+  , evalProgram (parse "10 / 2 >= 5")
     === Right (Obj.Boolean True)
 
-  , Either.isLeft (eval (parse "5 + nil != 1"))
+  , Either.isLeft (evalProgram (parse "5 + nil != 1"))
     === True
   ]

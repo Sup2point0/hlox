@@ -3,12 +3,12 @@ module Hlox where
 import Data.Either qualified as Either
 
 import Errors
-import Lexer (tokenise)
+import Lexer qualified
 import Lexer.Tokens (LexToken)
-import Parser (parseExpr)
+import Parser qualified
 import Parser.Ast (Program)
 import Parser.Errors (ParseError(UnparsedInput))
-import Evaluator (eval)
+import Evaluator qualified
 import Evaluator.Objects (EvalObject)
 
 
@@ -26,17 +26,17 @@ parse input = do
 
     tryParse :: [LexToken] -> Either Error Program
     tryParse tokens
-      = case parseExpr tokens of
-          Left err          -> Left (ParseErr err)
-          Right ([], ast)  -> Right ast
-          Right (res, _)    -> Left (ParseErr (UnparsedInput res))
+      = case Parser.parseProgram tokens of
+          Left err        -> Left (ParseErr err)
+          Right ([], ast) -> Right ast
+          Right (res, _)  -> Left (ParseErr (UnparsedInput res))
 
 -- | Try to execute and evaluate the provided Lox source code, crashing if the program throws an error.
 exec :: String -> EvalObject
 exec src = let
   parsed = parse src
   ast    = Either.fromRight (errorLeft parsed) parsed
-  res    = eval ast
+  res    = Evaluator.evalProgram ast
   in
     Either.fromRight (errorLeft res) res
 

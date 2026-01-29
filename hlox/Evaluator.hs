@@ -1,23 +1,37 @@
 module Evaluator where
 
-import Evaluator.Objects
+import Debug.Trace (trace)
+
+import Evaluator.Objects qualified as Obj
+import Evaluator.Objects (EvalObject, showType)
 import Evaluator.Errors qualified as Err
 import Evaluator.Errors (EvalError)
 
 import Parser.Ast qualified as Ast
-import Parser.Ast (Program, Expr)
+import Parser.Ast (Program, Node)
 import Parser.Ops qualified as Op
 
 
 type EvalResult = Either EvalError EvalObject
 
 
-eval :: Program -> EvalResult
+evalProgram :: Program -> EvalResult
+evalProgram [] = return Obj.Nil
+evalProgram [node] = eval node
+evalProgram (node:nodes) = do
+  _ <- eval node
+  evalProgram nodes
 
-eval (Ast.Unary Op.NEGATE expr) = do
-  expr' <- eval expr
-  case expr' of
-    Number n -> return $ Number n
+
+eval :: Node -> EvalResult
+
+eval (Ast.Stmt node)  = eval node
+eval (Ast.Print node) = return Obj.Nil where !_ = trace (show (eval node)) Obj.Nil
+
+eval (Ast.Unary Op.NEGATE node) = do
+  node' <- eval node
+  case node' of
+    Obj.Number n -> return $ Obj.Number n
     ex       -> Left (Err.TypeError "number" (showType ex))
 
 eval (Ast.Binary Op.EQ   left right) = evalBinaryEqOrd (==) left right
@@ -33,14 +47,14 @@ eval (Ast.Binary Op.MULT left right)     = evalBinaryArithmetic (*) left right
 eval (Ast.Binary Op.DIV left right)      = evalBinaryArithmetic (/) left right
 
 eval (Ast.Var _)   = Left Err.UnknownError
-eval (Ast.Str str) = return $ String str
-eval (Ast.Num n)   = return $ Number n
-eval (Ast.Bool b)  = return $ Boolean b
-eval (Ast.Nil)     = return $ Nil
+eval (Ast.Str str) = return $ Obj.String str
+eval (Ast.Num n)   = return $ Obj.Number n
+eval (Ast.Bool b)  = return $ Obj.Boolean b
+eval (Ast.Nil)     = return $ Obj.Nil
 
 
 evalBinaryEqOrd :: (forall t. (Eq t, Ord t) => t -> t -> Bool)
-                -> Expr -> Expr
+                -> Node -> Node
                 -> EvalResult
 
 evalBinaryEqOrd op left right = do
@@ -48,14 +62,14 @@ evalBinaryEqOrd op left right = do
   right' <- eval right
 
   case (left', right') of
-    (Nil      , Nil      ) -> return $ Boolean True
-    (Boolean l, Boolean r) -> return $ Boolean (l `op` r)
-    (Number  l, Number  r) -> return $ Boolean (l `op` r)
-    (String  l, String  r) -> return $ Boolean (l `op` r)
+    (Obj.Nil      , Obj.Nil      ) -> return $ Obj.Boolean True
+    (Obj.Boolean l, Obj.Boolean r) -> return $ Obj.Boolean (l `op` r)
+    (Obj.Number  l, Obj.Number  r) -> return $ Obj.Boolean (l `op` r)
+    (Obj.String  l, Obj.String  r) -> return $ Obj.Boolean (l `op` r)
     _ -> Left (Err.MonoTypeError (showType left') (showType right'))
 
 
-evalBinaryArithmetic :: (Float -> Float -> Float) -> Expr -> Expr
+evalBinaryArithmetic :: (Float -> Float -> Float) -> Node -> Node
                      -> EvalResult
 
 evalBinaryArithmetic op left right = do
@@ -63,7 +77,7 @@ evalBinaryArithmetic op left right = do
   right' <- eval right
 
   case (left', right') of
-    (Number l, Number r) -> return $ Number (l `op` r)
-    (Number _, r       ) -> Left (Err.TypeError "Number" (showType r))
-    (l       , Number _) -> Left (Err.TypeError "Number" (showType l))
-    (l       , r       ) -> Left (Err.MonoTypeError (showType l) (showType r))
+    (Obj.Number l, Obj.Number r) -> return $ Obj.Number (l `op` r)
+    (Obj.Number _, r           ) -> Left (Err.TypeError "Number" (showType r))
+    (l           , Obj.Number _) -> Left (Err.TypeError "Number" (showType l))
+    (l           , r           ) -> Left (Err.MonoTypeError (showType l) (showType r))

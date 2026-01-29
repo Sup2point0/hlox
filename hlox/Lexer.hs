@@ -16,7 +16,7 @@ type LexOutput = Either LexError LexToken
 type LexResult = Either [LexError] [LexToken]
 
 
-data Lexer r = Lexer {
+newtype Lexer r = Lexer {
     lex :: String -> [(r, String)]
   }
   deriving Functor
