@@ -5,14 +5,14 @@ data EvalError =
     UnknownError
 
   -- | Tried executing an operation expecting a particular type, but received another type
-  | TypeError
-      String   -- expected type
-      String   -- received type
-      -- EvalObject -- received value
+  | TypeError String String
 
   -- | Tried executing an operation expecting 2 objects of the same type, but received different types
-  | MonoTypeError
-      String -- left type
-      String -- right type
+  | MonoTypeError String String
   
-  deriving (Eq, Show)
+  deriving Eq
+
+instance Show EvalError where
+  show UnknownError                  = "Unknown error"
+  show (TypeError expected received) = "Type error - Expected: " ++ expected ++ ", found: " ++ received
+  show (MonoTypeError l r)           = "Type error - Found incompatible types: " ++ l ++ ", " ++ r

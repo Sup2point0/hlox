@@ -13,6 +13,7 @@ library
     import:           warnings
     exposed-modules:
         Hlox,
+        Errors,
         Lexer,
         Lexer.Tokens,
         Lexer.Errors,
