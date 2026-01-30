@@ -5,7 +5,7 @@ import Data.List qualified as List
 import Data.Maybe qualified as Maybe
 
 import Parser.Ast qualified as Ast
-import Parser.Ast (Program, Node, child)
+import Parser.Ast (Program, child)
 import Parser.Ops qualified as Op
 import Parser.Ops (Op2)
 import Parser.Errors qualified as Err
@@ -25,7 +25,7 @@ parseProgram = parse' []
   where
     parse' :: Program -> Parser Program
     parse' acc tokens = do
-      (tokens', stmt) <- parseStmt tokens
+      (tokens', stmt) <- parseDecl tokens
       -- Yeah pretty messy, wish GHC didn't care about indentation so much...
       let
         acc' = stmt:acc
@@ -39,7 +39,19 @@ parseProgram = parse' []
           _                  -> Left (Err.UnparsedInput tokens')
 
 
-parseStmt :: Parser Node
+parseDecl :: Parser Ast.Node
+parseDecl (Tk.VAR:ts') = parseDeclVar ts'
+parseDecl tokens = parseStmt tokens
+
+
+parseDeclVar :: Parser Ast.Node
+parseDeclVar ((Tk.IDENT v):(Tk.EQ):ts) = do
+  (tokens', expr) <- parseExpr ts
+  return (tokens', Ast.DeclVar v expr)
+parseDeclVar tokens = Left (Err.UnexpectedInput tokens)
+
+
+parseStmt :: Parser Ast.Node
 
 parseStmt (Tk.PRINT:ts) = do
   (tokens', expr) <- parseExpr ts
@@ -50,10 +62,10 @@ parseStmt tokens = do
   return (tokens', Ast.Stmt expr)
 
 
-parseExpr :: Parser Node
+parseExpr :: Parser Ast.Node
 parseExpr = parseEquality
 
-parseEquality :: Parser Node
+parseEquality :: Parser Ast.Node
 parseEquality tokens = do
     (tokens', left) <- parseComparison tokens
     recurseBinary repl parseComparison left tokens'
@@ -63,7 +75,7 @@ parseEquality tokens = do
         (Tk.NEQ, Op.NEQ)
       ]
 
-parseComparison :: Parser Node
+parseComparison :: Parser Ast.Node
 parseComparison tokens = do
     (tokens', left) <- parseTerm tokens
     recurseBinary repl parseTerm left tokens'
@@ -75,7 +87,7 @@ parseComparison tokens = do
         (Tk.GTEQ, Op.GTEQ)
       ]
 
-parseTerm :: Parser Node
+parseTerm :: Parser Ast.Node
 parseTerm tokens = do
     (tokens', left) <- parseFactor tokens
     recurseBinary repl parseFactor left tokens'
@@ -85,7 +97,7 @@ parseTerm tokens = do
         (Tk.MINUS, Op.SUBTRACT) 
       ]
 
-parseFactor :: Parser Node
+parseFactor :: Parser Ast.Node
 parseFactor tokens = do
     (tokens', left) <- parseUnary tokens
     recurseBinary repl parseUnary left tokens'
@@ -95,14 +107,14 @@ parseFactor tokens = do
         (Tk.SLASH, Op.DIV) 
       ]
 
-parseUnary :: Parser Node
+parseUnary :: Parser Ast.Node
 parseUnary (Tk.MINUS:ts) = do
   (tokens', expr) <- parseUnary ts
   return (tokens', Ast.Unary Op.NEGATE expr)
 parseUnary tokens = parseAtom tokens
 
 
-parseAtom :: Parser Node
+parseAtom :: Parser Ast.Node
 
 parseAtom ((Tk.IDENT v):ts) = Right (ts, Ast.Var v)
 parseAtom ((Tk.STR str):ts) = Right (ts, Ast.Str str)
@@ -121,7 +133,7 @@ parseAtom []     = Left Err.UnexpectedEnd
 parseAtom tokens = Left (Err.UnexpectedInput tokens)
 
 
-recurseBinary :: [(LexToken, Op2)] -> Parser Node -> Node -> Parser Node
+recurseBinary :: [(LexToken, Op2)] -> Parser Ast.Node -> Ast.Node -> Parser Ast.Node
 recurseBinary repl parser left tokens
   = case continue of
       Just (Right tokens', op) -> do

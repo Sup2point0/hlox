@@ -6,10 +6,13 @@ import Parser.Ops
 type Program = [Node]
 
 data Node =
-    Stmt Node
+    DeclVar String Node
+  | Stmt Node
   | Print Node
+  
   | Binary Op2 Node Node
   | Unary Op1 Node
+
   | Var String
   | Str String
   | Num Float
@@ -19,7 +22,9 @@ data Node =
 
 
 instance Show Node where
-  show (Stmt node)  = show node ++ ";"
+  show (DeclVar ident node)  = "var " ++ show ident ++ " = " ++ show node ++ ";"
+
+  show (Stmt node)  = " {" ++ show node ++ "; }"
   show (Print node) = "print (" ++ show node ++ ")"
 
   show (Binary op left right) = "(" ++ show left ++ show op ++ show right ++ ")"
@@ -34,6 +39,7 @@ instance Show Node where
 
 
 child :: Node -> Maybe Node
+child (DeclVar _ node) = Just node
 child (Stmt node)  = Just node
 child (Print node) = Just node
 child _            = Nothing

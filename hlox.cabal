@@ -27,7 +27,10 @@ library
     other-modules:
         Lexer.Helpers,
         Parser.Helpers,
-    build-depends:    base ^>=4.18.3.0
+    build-depends:
+        base ^>=4.18.3.0,
+        containers,
+        mtl,
     hs-source-dirs:   hlox
     default-language: GHC2021
 

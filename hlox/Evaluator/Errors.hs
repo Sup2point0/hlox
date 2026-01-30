@@ -9,6 +9,9 @@ data EvalError =
 
   -- | Tried executing an operation expecting 2 objects of the same type, but received different types
   | MonoTypeError String String
+
+  -- | Tried reading the value of a variable which has not been declared
+  | UndefinedVariable String
   
   deriving Eq
 
