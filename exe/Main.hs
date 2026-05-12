@@ -1,4 +1,8 @@
 module Main where
 
 main :: IO ()
-main = print "sup"
+main = do
+  prog <- readLine
+  case evalProgram (parse prog) of
+    Left  e -> print e
+    Right r -> print r

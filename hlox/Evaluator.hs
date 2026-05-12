@@ -13,7 +13,6 @@ import Evaluator.Errors (EvalError)
 import Parser.Ast qualified as Ast
 import Parser.Ast (Program, Node)
 import Parser.Ops qualified as Op
-import qualified Evaluator.Errors as Err
 
 
 type VarsDict = Map String EvalObject
@@ -38,6 +37,10 @@ evalProgram blocks = go blocks Map.empty
 eval :: Node -> VarsDict -> Either EvalError EvalResult
 
 eval (Ast.DeclVar ident node) vars = do
+  (val, vars') <- eval node vars
+  return (val, Map.insert ident val vars')
+
+eval (Ast.Asgn ident node) vars = do
   (val, vars') <- eval node vars
   return (val, Map.insert ident val vars')
 
@@ -70,10 +73,10 @@ eval' (Ast.Binary Op.LTEQ left right) = evalBinaryEqOrd (<=) left right
 eval' (Ast.Binary Op.GT   left right) = evalBinaryEqOrd (>)  left right
 eval' (Ast.Binary Op.GTEQ left right) = evalBinaryEqOrd (>=) left right
 
-eval' (Ast.Binary Op.ADD left right)      = evalBinaryArithmetic (+) left right
+eval' (Ast.Binary Op.ADD      left right) = evalBinaryArithmetic (+) left right
 eval' (Ast.Binary Op.SUBTRACT left right) = evalBinaryArithmetic (-) left right
-eval' (Ast.Binary Op.MULT left right)     = evalBinaryArithmetic (*) left right
-eval' (Ast.Binary Op.DIV left right)      = evalBinaryArithmetic (/) left right
+eval' (Ast.Binary Op.MULT     left right) = evalBinaryArithmetic (*) left right
+eval' (Ast.Binary Op.DIV      left right) = evalBinaryArithmetic (/) left right
 
 eval' (Ast.Str str) = return . (Obj.String str,)
 eval' (Ast.Num n)   = return . (Obj.Number n,)

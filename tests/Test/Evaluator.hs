@@ -20,6 +20,7 @@ testEvaluator :: [TestTree]
 testEvaluator =
   [
     testEval
+  , testState
   ]
   
 testEval :: TestTree
@@ -39,4 +40,20 @@ testEval = testCollection "eval"
 
   , evalProgram (parse "1 + 2; nil == nil")
     === Right (Obj.Boolean True)
+  ]
+
+testState :: TestTree
+testState = testCollection "state"
+  [
+    evalProgram (parse "var x = 1; print x; x")
+    === Right (Obj.Number 1)
+
+  , evalProgram (parse "var x = 1; y = x + 1; y")
+    === Right (Obj.Number 2)
+
+  , evalProgram (parse "var x = 1; x = x + 1; x")
+    === Right (Obj.Number 2)
+
+  , evalProgram (parse "var x = 1; var y = 2; x = x + y; y = y + x; y")
+    === Right (Obj.Number 5)
   ]

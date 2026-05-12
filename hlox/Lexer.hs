@@ -95,20 +95,20 @@ token =
   <| Right Tk.SLASH <$ char '/'
   
   <| Right Tk.NEQ  <$ string "!="
-  <| Right Tk.BANG <$ char '!'
+  <| Right Tk.BANG <$ char   '!'
   <| Right Tk.EQQ  <$ string "=="
   <| Right Tk.LTEQ <$ string "=<"
-  <| Right Tk.EQ   <$ char '='
+  <| Right Tk.EQ   <$ char   '='
   <| Right Tk.GTEQ <$ string ">="
-  <| Right Tk.GT   <$ char '>'
-  <| Right Tk.LT   <$ char '<'
+  <| Right Tk.GT   <$ char   '>'
+  <| Right Tk.LT   <$ char   '<'
 
   <| Right Tk.AND    <$ string "and"
   <| Right Tk.CLASS  <$ string "class"
   <| Right Tk.ELSE   <$ string "else"
   <| Right Tk.FALSE  <$ string "false"
   <| Right Tk.FUN    <$ string "fun"
-  <| Right Tk.FOR    <$ string "for"
+  <| Right Tk.FOR    <$ string "for'"
   <| Right Tk.IF     <$ string "if"
   <| Right Tk.NIL    <$ string "nil"
   <| Right Tk.OR     <$ string "or"

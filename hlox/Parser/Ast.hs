@@ -7,6 +7,7 @@ type Program = [Node]
 
 data Node =
     DeclVar String Node
+  | Asgn String Node
   | Stmt Node
   | Print Node
   

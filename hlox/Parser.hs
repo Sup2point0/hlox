@@ -39,10 +39,10 @@ parseProgram = parse' []
           _                  -> Left (Err.UnparsedInput tokens')
 
 
+-- | Parse `var x = _`
 parseDecl :: Parser Ast.Node
 parseDecl (Tk.VAR:ts') = parseDeclVar ts'
 parseDecl tokens = parseStmt tokens
-
 
 parseDeclVar :: Parser Ast.Node
 parseDeclVar ((Tk.IDENT v):(Tk.EQ):ts) = do
@@ -63,8 +63,24 @@ parseStmt tokens = do
 
 
 parseExpr :: Parser Ast.Node
-parseExpr = parseEquality
+parseExpr = parseAsgn
 
+-- | Parse `lvalue = rvalue`
+parseAsgn :: Parser Ast.Node
+parseAsgn tokens = do
+  (tokens', lvalue) <- parseEquality tokens
+  parseAsgnVar lvalue tokens'
+
+parseAsgnVar :: Ast.Node -> Parser Ast.Node
+
+parseAsgnVar (Ast.Var v) ((Tk.EQ):ts) = do
+  (tokens', value) <- parseExpr ts
+  return (tokens', Ast.Asgn v value)
+parseAsgnVar lvalue ((Tk.EQ):ts)
+  = Left (Err.InvalidAssignmentTarget lvalue)
+parseAsgnVar value tokens = return (tokens, value)
+
+-- | Parse `_ == _`
 parseEquality :: Parser Ast.Node
 parseEquality tokens = do
     (tokens', left) <- parseComparison tokens
