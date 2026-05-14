@@ -6,9 +6,9 @@ import Parser.Ops
 type Program = [Node]
 
 data Node =
-    DeclVar String Node
+    Stmt Node
+  | DeclVar String Node
   | Asgn String Node
-  | Stmt Node
   | Print Node
   
   | Binary Op2 Node Node
@@ -25,18 +25,19 @@ data Node =
 instance Show Node where
   show (DeclVar ident node)  = "var " ++ show ident ++ " = " ++ show node ++ ";"
 
-  show (Stmt node)  = " {" ++ show node ++ "; }"
-  show (Print node) = "print (" ++ show node ++ ")"
+  show (Stmt node)          = " {" ++ show node ++ "; }"
+  show (DeclVar ident node) = "var " ++ show ident ++ " = " ++ show node ++ ";"
+  show (Asgn ident node)    = show ident ++ " = " ++ show node ++ ";"
+  show (Print node)         = "print (" ++ show node ++ ")"
 
   show (Binary op left right) = "(" ++ show left ++ show op ++ show right ++ ")"
   show (Unary op node) = show op ++ show node
 
   show (Var ident) = "'" ++ show ident ++ "'"
-
-  show (Str str) = "\"" ++ str ++ "\""
-  show (Num n)   = show n
-  show (Bool b)  = show b
-  show  Nil      = "Nil"
+  show (Str str)   = "\"" ++ str ++ "\""
+  show (Num n)     = show n
+  show (Bool b)    = show b
+  show  Nil        = "Nil"
 
 
 child :: Node -> Maybe Node

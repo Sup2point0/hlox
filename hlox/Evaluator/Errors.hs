@@ -16,6 +16,7 @@ data EvalError =
   deriving Eq
 
 instance Show EvalError where
-  show UnknownError                  = "Unknown error"
-  show (TypeError expected received) = "Type error - Expected: " ++ expected ++ ", found: " ++ received
-  show (MonoTypeError l r)           = "Type error - Found incompatible types: " ++ l ++ ", " ++ r
+  show UnknownError          = "Unknown error"
+  show (TypeError exp rec)   = "Type error - Expected: " ++ exp ++ ", found: " ++ rec
+  show (MonoTypeError l r)   = "Type error - Found incompatible types: " ++ l ++ ", " ++ r
+  show (UndefinedVariable v) = "Error - Undefined variable: " ++ v

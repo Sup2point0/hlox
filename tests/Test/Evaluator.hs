@@ -10,6 +10,7 @@ import Hlox qualified
 import Parser.Ast
 import Evaluator
 import Evaluator.Objects qualified as Obj
+import Evaluator.Errors qualified as Err
 
 
 parse :: String -> Program
@@ -21,6 +22,7 @@ testEvaluator =
   [
     testEval
   , testState
+  , testStateErrors
   ]
   
 testEval :: TestTree
@@ -48,7 +50,7 @@ testState = testCollection "state"
     evalProgram (parse "var x = 1; print x; x")
     === Right (Obj.Number 1)
 
-  , evalProgram (parse "var x = 1; y = x + 1; y")
+  , evalProgram (parse "var x = 1; var y = x + 1; y")
     === Right (Obj.Number 2)
 
   , evalProgram (parse "var x = 1; x = x + 1; x")
@@ -56,4 +58,11 @@ testState = testCollection "state"
 
   , evalProgram (parse "var x = 1; var y = 2; x = x + y; y = y + x; y")
     === Right (Obj.Number 5)
+  ]
+
+testStateErrors :: TestTree
+testStateErrors = testCollection "state"
+  [
+    evalProgram (parse "var x = 1; print x; y")
+    === Left (Err.UndefinedVariable "y")
   ]
