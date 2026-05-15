@@ -10,10 +10,10 @@ data EvalObject =
 
 
 instance Show EvalObject where
-  show (Nil)          = "nil"
-  show (Boolean bool) = show bool
-  show (Number n)     = show n
-  show (String s)     = "\"" ++ s ++ "\""
+  show (Nil)        = "nil"
+  show (Boolean b)  = show b
+  show (Number n)   = show n
+  show (String str) = "\"" ++ str ++ "\""
 
 
 showType :: EvalObject -> String

@@ -98,6 +98,20 @@ testParseBlock = testCollection "parseBlock"
       Block [Stmt (Var "x")]
     , Block [Stmt (Var "y")]
     ]
+
+  , parse "x; { y; } z;"
+    === Right [
+      Stmt (Var "x")
+    , Block [Stmt (Var "y")]
+    , Stmt (Var "z")
+    ]
+
+  , parse "'1'; { '2'; } '3';"
+    === Right [
+      Stmt (Str "1")
+    , Block [Stmt (Str "2")]
+    , Stmt (Str "3")
+    ]
   ]
 
 testParseProgram :: TestTree

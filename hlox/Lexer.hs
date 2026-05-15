@@ -61,6 +61,9 @@ satisfies pred = Lexer eat
 anyChar :: Lexer Char
 anyChar = satisfies (const True)
 
+anyCharExcept :: Char -> Lexer Char
+anyCharExcept c = satisfies (/= c)
+
 char :: Char -> Lexer Char
 char c = satisfies (== c)
 
@@ -120,7 +123,8 @@ token =
   <| Right Tk.VAR    <$ string "var"
   <| Right Tk.WHILE  <$ string "while"
 
-  <| Right . Tk.STR <$> (string "\"" *> many anyChar <* string "\"")
+  <| Right . Tk.STR <$> (string "\"" *> many (anyCharExcept '"') <* string "\"")
+  <| Right . Tk.STR <$> (string "'" *> many (anyCharExcept '\'') <* string "'")
   <| Right . Tk.NUM . read @Float <$> ((:) <$> digit <*> many (digit <|> char '.'))
   <| Right . Tk.IDENT <$> ((:) <$> (letter <|> char '_') <*> many (letter <|> digit <|> char '_'))
 
@@ -131,7 +135,6 @@ program = many token
 
 loxLexer :: Lexer LexResult
 loxLexer = fromFallibles <$> program
-
 
 tokenise :: String -> LexResult
 tokenise prog

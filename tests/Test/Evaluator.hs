@@ -7,14 +7,17 @@ import Test.Tasty
 import Util.Syntax
 
 import Hlox qualified
-import Parser.Ast
+import Parser.Ast (Program)
 import Evaluator
 import Evaluator.Objects qualified as Obj
 import Evaluator.Errors qualified as Err
 
 
 parse :: String -> Program
-parse = Either.fromRight [] . Hlox.parse
+parse src = Either.either
+  (error . show)
+  id
+  (Hlox.parse src)
 
 
 testEvaluator :: [TestTree]
@@ -32,7 +35,10 @@ testEval = testCollection "eval"
     evalProgram (parse "0;")
     === Right (Obj.Number 0)
 
-  , evalProgram (parse "\"sup world!\"")
+  , evalProgram (parse "true;")
+    === Right (Obj.Boolean True)
+
+  , evalProgram (parse "'sup world!';")
     === Right (Obj.String "sup world!")
 
   , evalProgram (parse "1 + 2;")
@@ -78,11 +84,11 @@ testScope :: TestTree
 testScope = testCollection "scope"
   [
     evalProgram (parse "\
-        \  var x = 0;    \
-        \  {             \
-        \    x = 1;      \
-        \  }             \
-        \  x;            \
+        \  var x = 0;  \
+        \  {           \
+        \    x = 1;    \
+        \  }           \
+        \  x;          \
       \")
     === Right (Obj.Number 1)
   
@@ -97,19 +103,19 @@ testScope = testCollection "scope"
 
   , evalProgram (parse "\
         \  var x = \"don't touch!\";  \
-        \  {                          \
-        \    var x = \"oh no\";       \
-        \  }                          \
-        \  x;                         \
+        \  {                         \
+        \    var x = 'oh no';        \
+        \  }                         \
+        \  x;                        \
       \")
     === Right (Obj.String "don't touch!")
 
   , evalProgram (parse "\
-        \  var y = \"do touch!\";  \
-        \  {                       \
-        \    y = \"success!\";     \
-        \  }                       \
-        \  y;                      \
+        \  var y = 'do touch!';  \
+        \  {                     \
+        \    y = 'success!';     \
+        \  }                     \
+        \  y;                    \
       \")
     === Right (Obj.String "success!")
   ]

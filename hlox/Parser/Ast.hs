@@ -9,7 +9,7 @@ type Program = [Node]
 
 data Node =
     Block [Node]
-    
+
   | Stmt Node
   | DeclVar String Node
   | Print Node
@@ -47,6 +47,6 @@ instance Show Node where
 
 child :: Node -> Maybe Node
 child (DeclVar _ node) = Just node
-child (Stmt node)  = Just node
-child (Print node) = Just node
-child _            = Nothing
+child (Stmt node)      = Just node
+child (Print node)     = Just node
+child _                = Nothing

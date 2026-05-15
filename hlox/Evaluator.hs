@@ -21,6 +21,8 @@ type EvalResult = (EvalObject, EvalEnv)
 evalProgram :: Program -> Either EvalError EvalObject
 evalProgram ast = go ast Env.new
   where
+    go :: Program -> EvalEnv -> Either EvalError EvalObject
+    
     go [] _ = Right (Obj.Nil)
     
     go [node] env = do

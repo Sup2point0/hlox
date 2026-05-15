@@ -7,7 +7,7 @@ import Data.List qualified as List
 import Data.Maybe qualified as Maybe
 
 import Parser.Ast qualified as Ast
-import Parser.Ast (Program, child)
+import Parser.Ast (Program)
 import Parser.Ops qualified as Op
 import Parser.Ops (Op2)
 import Parser.Errors qualified as Err
@@ -68,7 +68,7 @@ parseStmt tokens = do
 
 -- | Parse `{ _ }`
 parseBlock :: Parser [Ast.Node]
-parseBlock tokens@(Tk.RBRACE:ts) = return (tokens, [])
+parseBlock tokens@(Tk.RBRACE:_) = return (tokens, [])
 parseBlock tokens = do
   (tokens', stmt) <- parseDecl tokens
   (tokens'', stmts) <- parseBlock tokens'
