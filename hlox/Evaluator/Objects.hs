@@ -6,7 +6,15 @@ data EvalObject =
   | Boolean Bool
   | Number  Float
   | String  String
-  deriving (Eq, Show)
+  deriving (Eq)
+
+
+instance Show EvalObject where
+  show (Nil)          = "nil"
+  show (Boolean bool) = show bool
+  show (Number n)     = show n
+  show (String s)     = s
+
 
 showType :: EvalObject -> String
 showType (Boolean _) = "Boolean"

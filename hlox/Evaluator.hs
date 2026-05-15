@@ -1,12 +1,11 @@
 module Evaluator where
 
-import Data.Map qualified as Map
-import Data.Map (Map)
--- import Data.Maybe qualified as Maybe
 import Debug.Trace (trace)
 
 import Evaluator.Objects qualified as Obj
 import Evaluator.Objects (EvalObject, showType)
+import Evaluator.Environment qualified as Env
+import Evaluator.Environment (EvalEnv)
 import Evaluator.Errors qualified as Err
 import Evaluator.Errors (EvalError)
 
@@ -14,66 +13,62 @@ import Parser.Ast qualified as Ast
 import Parser.Ast (Program, Node)
 import Parser.Ops qualified as Op
 
-
-type VarsDict = Map String EvalObject
-type EvalResult = (EvalObject, VarsDict)
+  
+type EvalResult = (EvalObject, EvalEnv)
 
 
 evalProgram :: Program -> Either EvalError EvalObject
 evalProgram []     = return Obj.Nil
-evalProgram [node] = do
-  (out, _) <- eval node Map.empty
-  return out
-evalProgram blocks = go blocks Map.empty
+evalProgram blocks = go blocks Env.new
   where
-    go [node] vars = do
-      (out, _) <- eval node vars
+    go [node] env = do
+      (out, _) <- eval node env
       return out
-    go (node:nodes) vars = do
-      (_, vars') <- eval node vars
-      go nodes vars'
+    go (node:nodes) env = do
+      (_, env') <- eval node env
+      go nodes env'
       
 
-eval :: Node -> VarsDict -> Either EvalError EvalResult
+eval :: Node -> EvalEnv -> Either EvalError EvalResult
 
-eval (Ast.Block nodes) vars = go nodes vars
+eval (Ast.Block nodes) env = go nodes env
   where
-    go :: [Ast.Node] -> VarsDict -> Either EvalError EvalResult
-    go [] vars = Right (Obj.Nil, vars)
-    go (stmt:stmts) vars = do
-      (_, vars') <- eval stmt vars
-      go stmts vars'
+    go :: [Ast.Node] -> EvalEnv -> Either EvalError EvalResult
+    go [] env = Right (Obj.Nil, env)
+    go (stmt:stmts) env = do
+      (_, env') <- eval stmt env
+      go stmts env'
 
 
-eval (Ast.DeclVar ident node) vars = do
-  (val, vars') <- eval node vars
-  return (val, Map.insert ident val vars')
+eval (Ast.DeclVar ident node) env = do
+  (val, env') <- eval node env
+  return (val, Env.set ident val env')
 
-eval (Ast.AsgnVar ident node) vars = do
-  (val, vars') <- eval node vars
-  case ident `Map.member` vars' of
-    True  -> return (val, Map.insert ident val vars')
-    False -> Left (Err.UndefinedVariable ident)
+eval (Ast.AsgnVar ident node) env = do
+  (val, env') <- eval node env
+  case Env.get ident env' of
+    Just _  -> return (val, Env.set ident val env')
+    Nothing -> Left (Err.UndefinedVariable ident)
 
-eval (Ast.Print node) vars = do
-  (node', vars') <- eval node vars
-  return (trace (show node') Obj.Nil, vars')
+eval (Ast.Print node) env = do
+  (node', env') <- eval node env
+  return (trace ("hlox> " ++ show node') Obj.Nil, env')
 
-eval (Ast.Var ident) vars
-  = case Map.lookup ident vars of
-      Just val -> return (val, vars)
+eval (Ast.Var ident) env
+  = case Env.get ident env of
+      Just val -> return (val, env)
       Nothing  -> Left (Err.UndefinedVariable ident)
 
-eval (Ast.Unary Op.NEGATE node) vars = do
-  (node', vars') <- eval node vars
+eval (Ast.Unary Op.NEGATE node) env = do
+  (node', env') <- eval node env
   case node' of
-    Obj.Number n -> return (Obj.Number n, vars')
+    Obj.Number n -> return (Obj.Number n, env')
     ex           -> Left (Err.TypeError "number" (showType ex))
 
-eval node vars = eval' node vars
+eval node env = eval' node env
 
 
-eval' :: Node -> VarsDict -> Either EvalError EvalResult
+eval' :: Node -> EvalEnv -> Either EvalError EvalResult
 
 eval' (Ast.Stmt node)  = eval node
 
@@ -98,32 +93,32 @@ eval' _             = const  $ Left Err.UnknownError
 
 evalBinaryEqOrd :: (forall t. (Eq t, Ord t) => t -> t -> Bool)
                 -> Node -> Node
-                -> VarsDict
+                -> EvalEnv
                 -> Either EvalError EvalResult
 
-evalBinaryEqOrd op left right vars = do
-  (left' , vars')  <- eval left vars
-  (right', vars'') <- eval right vars'
+evalBinaryEqOrd op left right env = do
+  (left' , env')  <- eval left env
+  (right', env'') <- eval right env'
 
   case (left', right') of
-    (Obj.Nil      , Obj.Nil      ) -> return (Obj.Boolean True      , vars'')
-    (Obj.Boolean l, Obj.Boolean r) -> return (Obj.Boolean (l `op` r), vars'')
-    (Obj.Number  l, Obj.Number  r) -> return (Obj.Boolean (l `op` r), vars'')
-    (Obj.String  l, Obj.String  r) -> return (Obj.Boolean (l `op` r), vars'')
+    (Obj.Nil      , Obj.Nil      ) -> return (Obj.Boolean True      , env'')
+    (Obj.Boolean l, Obj.Boolean r) -> return (Obj.Boolean (l `op` r), env'')
+    (Obj.Number  l, Obj.Number  r) -> return (Obj.Boolean (l `op` r), env'')
+    (Obj.String  l, Obj.String  r) -> return (Obj.Boolean (l `op` r), env'')
     _ -> Left (Err.MonoTypeError (showType left') (showType right'))
 
 
 evalBinaryArithmetic :: (Float -> Float -> Float)
                      -> Node -> Node
-                     -> VarsDict
+                     -> EvalEnv
                      -> Either EvalError EvalResult
 
-evalBinaryArithmetic op left right vars = do
-  (left',  vars')  <- eval left vars
-  (right', vars'') <- eval right vars'
+evalBinaryArithmetic op left right env = do
+  (left',  env')  <- eval left env
+  (right', env'') <- eval right env'
 
   case (left', right') of
-    (Obj.Number l, Obj.Number r) -> return (Obj.Number (l `op` r), vars'')
+    (Obj.Number l, Obj.Number r) -> return (Obj.Number (l `op` r), env'')
     (Obj.Number _, r           ) -> Left (Err.TypeError "Number" (showType r))
     (l           , Obj.Number _) -> Left (Err.TypeError "Number" (showType l))
     (l           , r           ) -> Left (Err.MonoTypeError (showType l) (showType r))

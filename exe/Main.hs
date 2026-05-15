@@ -1,8 +1,13 @@
 module Main where
 
+import Hlox qualified
+
 main :: IO ()
 main = do
-  prog <- readLine
-  case evalProgram (parse prog) of
-    Left  e -> print e
-    Right r -> print r
+  prog <- getLine
+  case prog of
+    "quit" -> return ()
+    "exit" -> return ()
+    _ -> do
+      print $ Hlox.exec prog
+      main

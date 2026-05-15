@@ -23,6 +23,7 @@ library
         Parser.Errors,
         Evaluator,
         Evaluator.Objects,
+        Evaluator.Environment,
         Evaluator.Errors,
     other-modules:
         Lexer.Helpers,
