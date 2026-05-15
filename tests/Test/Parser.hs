@@ -73,7 +73,12 @@ testParseExpr = testCollection "parseExpr"
 testParseBlock :: TestTree
 testParseBlock = testCollection "parseBlock"
   [
-    parse "{ x; }"
+    parse "{}"
+    === Right [
+      Block []
+    ]
+
+  , parse "{ x; }"
     === Right [
       Block [
         Stmt (Var "x")
@@ -86,6 +91,12 @@ testParseBlock = testCollection "parseBlock"
         DeclVar "x" (Num 0)
       , Stmt $ AsgnVar "x" (Binary Op.ADD (Var "x") (Num 1))
       ]
+    ]
+
+  , parse "{ x; } { y; }"
+    === Right [
+      Block [Stmt (Var "x")]
+    , Block [Stmt (Var "y")]
     ]
   ]
 

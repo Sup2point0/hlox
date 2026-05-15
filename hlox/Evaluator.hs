@@ -36,6 +36,15 @@ evalProgram blocks = go blocks Map.empty
 
 eval :: Node -> VarsDict -> Either EvalError EvalResult
 
+eval (Ast.Block nodes) vars = go nodes vars
+  where
+    go :: [Ast.Node] -> VarsDict -> Either EvalError EvalResult
+    go [] vars = Right (Obj.Nil, vars)
+    go (stmt:stmts) vars = do
+      (_, vars') <- eval stmt vars
+      go stmts vars'
+
+
 eval (Ast.DeclVar ident node) vars = do
   (val, vars') <- eval node vars
   return (val, Map.insert ident val vars')
