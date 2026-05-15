@@ -40,7 +40,7 @@ eval (Ast.DeclVar ident node) vars = do
   (val, vars') <- eval node vars
   return (val, Map.insert ident val vars')
 
-eval (Ast.Asgn ident node) vars = do
+eval (Ast.AsgnVar ident node) vars = do
   (val, vars') <- eval node vars
   case ident `Map.member` vars' of
     True  -> return (val, Map.insert ident val vars')

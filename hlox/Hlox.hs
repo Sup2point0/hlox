@@ -16,7 +16,8 @@ import Evaluator.Objects (EvalObject)
 parse :: String -> Either Error Program
 parse input = do
   tokens <- tryLex input
-  tryParse tokens
+  ast <- tryParse tokens
+  return ast
   where
     tryLex :: String -> Either Error [LexToken]
     tryLex src

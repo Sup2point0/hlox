@@ -1,5 +1,7 @@
 module Parser where
 
+import Debug.Trace
+
 import Data.Either qualified as Either
 import Data.List qualified as List
 import Data.Maybe qualified as Maybe
@@ -20,48 +22,59 @@ import Lexer.Tokens (LexToken)
 type Parser r = [LexToken] -> Either ParseError ([LexToken], r)
 
 
+-- | Parse a tokenised Lox program.
 parseProgram :: Parser Program
-parseProgram = parse' []
-  where
-    parse' :: Program -> Parser Program
-    parse' acc tokens = do
-      (tokens', stmt) <- parseDecl tokens
-      -- Yeah pretty messy, wish GHC didn't care about indentation so much...
-      let
-        acc' = stmt:acc
-        in case tokens' of
-          [Tk.SEMICOLON] -> Right ([], reverse acc')
-          []             -> Right ([], case acc' of
-                                [stmt'] -> Maybe.maybeToList (child stmt')
-                                _       -> reverse acc'
-                              )
-          (Tk.SEMICOLON:ts') -> parse' acc' ts'
-          _                  -> Left (Err.UnparsedInput tokens')
+parseProgram [] = Right ([], [])
+parseProgram tokens = do
+  (tokens', stmt) <- parseDecl tokens
+  Either.either
+    (const (Left (Err.UnparsedInput tokens')))
+    (\(tokens'', stmts) -> Right (tokens'', stmt:stmts))
+    (parseProgram tokens')
 
 
--- | Parse `var x = _`
+-- | Parse a top-level declaration, the highest level in the syntax tree.
 parseDecl :: Parser Ast.Node
 parseDecl (Tk.VAR:ts') = parseDeclVar ts'
 parseDecl tokens = parseStmt tokens
 
+-- | Parse `var x = _`
 parseDeclVar :: Parser Ast.Node
+
 parseDeclVar ((Tk.IDENT v):(Tk.EQ):ts) = do
   (tokens', expr) <- parseExpr ts
-  return (tokens', Ast.DeclVar v expr)
+  tokens'' <- expect Tk.SEMICOLON tokens'
+  return (tokens'', Ast.DeclVar v expr)
+
 parseDeclVar tokens = Left (Err.UnexpectedInput tokens)
 
-
+-- | Parse a statement.
 parseStmt :: Parser Ast.Node
+
+parseStmt (Tk.LBRACE:ts) = do
+  (tokens', stmts) <- parseBlock ts
+  tokens'' <- expect Tk.RBRACE tokens'
+  return (tokens'', Ast.Block stmts)
 
 parseStmt (Tk.PRINT:ts) = do
   (tokens', expr) <- parseExpr ts
-  return (tokens', Ast.Print expr)
+  tokens'' <- expect Tk.SEMICOLON tokens'
+  return (tokens'', Ast.Print expr)
 
 parseStmt tokens = do
   (tokens', expr) <- parseExpr tokens
-  return (tokens', Ast.Stmt expr)
+  tokens'' <- expect Tk.SEMICOLON tokens'
+  return (tokens'', Ast.Stmt expr)
 
+-- | Parse `{ _ }`
+parseBlock :: Parser [Ast.Node]
+parseBlock tokens@(Tk.RBRACE:ts) = return (tokens, [])
+parseBlock tokens = do
+  (tokens', stmt) <- parseDecl tokens
+  (tokens'', stmts) <- parseBlock tokens'
+  return (tokens'', stmt:stmts)
 
+-- | Parse an expression.
 parseExpr :: Parser Ast.Node
 parseExpr = parseAsgn
 
@@ -75,9 +88,11 @@ parseAsgnVar :: Ast.Node -> Parser Ast.Node
 
 parseAsgnVar (Ast.Var v) ((Tk.EQ):ts) = do
   (tokens', value) <- parseExpr ts
-  return (tokens', Ast.Asgn v value)
-parseAsgnVar lvalue ((Tk.EQ):ts)
+  return (tokens', Ast.AsgnVar v value)
+
+parseAsgnVar lvalue ((Tk.EQ):_)
   = Left (Err.InvalidAssignmentTarget lvalue)
+
 parseAsgnVar value tokens = return (tokens, value)
 
 -- | Parse `_ == _`
