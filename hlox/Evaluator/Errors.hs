@@ -2,7 +2,9 @@ module Evaluator.Errors where
 
 
 data EvalError =
-    UnknownError
+
+  -- | idk what happened mate
+    UnknownError String
 
   -- | Tried executing an operation expecting a particular type, but received another type
   | TypeError String String
@@ -16,7 +18,7 @@ data EvalError =
   deriving Eq
 
 instance Show EvalError where
-  show UnknownError          = "Unknown error"
-  show (TypeError exp rec)   = "Type error - Expected: " ++ exp ++ ", found: " ++ rec
+  show (UnknownError msg)    = "Unknown error: " ++ msg
+  show (TypeError expt recv) = "Type error - Expected: " ++ expt ++ ", found: " ++ recv
   show (MonoTypeError l r)   = "Type error - Found incompatible types: " ++ l ++ ", " ++ r
   show (UndefinedVariable v) = "Error - Undefined variable: " ++ v

@@ -13,7 +13,7 @@ instance Show EvalObject where
   show (Nil)          = "nil"
   show (Boolean bool) = show bool
   show (Number n)     = show n
-  show (String s)     = s
+  show (String s)     = "\"" ++ s ++ "\""
 
 
 showType :: EvalObject -> String
