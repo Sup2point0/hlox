@@ -125,7 +125,7 @@ parseTerm tokens = do
   where
     repl = [
         (Tk.PLUS, Op.ADD),
-        (Tk.MINUS, Op.SUBTRACT) 
+        (Tk.MINUS, Op.SUB) 
       ]
 
 parseFactor :: Parser Ast.Node

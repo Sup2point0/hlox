@@ -23,13 +23,20 @@ testEvaluator =
     testEval
   , testState
   , testStateErrors
+  , testScope
   ]
   
 testEval :: TestTree
 testEval = testCollection "eval"
   [
-    evalProgram (parse "1 + 2;")
-    === Right (Obj.Number 3.0)
+    evalProgram (parse "0;")
+    === Right (Obj.Number 0)
+
+  , evalProgram (parse "\"sup world!\"")
+    === Right (Obj.String "sup world!")
+
+  , evalProgram (parse "1 + 2;")
+    === Right (Obj.Number 3)
 
   , evalProgram (parse "1 + 2 == 3;")
     === Right (Obj.Boolean True)
@@ -65,4 +72,44 @@ testStateErrors = testCollection "state"
   [
     evalProgram (parse "var x = 1; print x; y;")
     === Left (Err.UndefinedVariable "y")
+  ]
+
+testScope :: TestTree
+testScope = testCollection "scope"
+  [
+    evalProgram (parse "\
+        \  var x = 0;    \
+        \  {             \
+        \    x = 1;      \
+        \  }             \
+        \  x;            \
+      \")
+    === Right (Obj.Number 1)
+  
+  , evalProgram (parse "\
+        \  var x = 0;    \
+        \  {             \
+        \    var x = 1;  \
+        \  }             \
+        \  x;            \
+      \")
+    === Right (Obj.Number 0)
+
+  , evalProgram (parse "\
+        \  var x = \"don't touch!\";  \
+        \  {                          \
+        \    var x = \"oh no\";       \
+        \  }                          \
+        \  x;                         \
+      \")
+    === Right (Obj.String "don't touch!")
+
+  , evalProgram (parse "\
+        \  var y = \"do touch!\";  \
+        \  {                       \
+        \    y = \"success!\";     \
+        \  }                       \
+        \  y;                      \
+      \")
+    === Right (Obj.String "success!")
   ]

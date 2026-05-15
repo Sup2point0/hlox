@@ -54,7 +54,7 @@ testParseExpr = testCollection "parseExpr"
     === Right [
       Stmt $ Binary Op.NEQ
         (Binary Op.ADD
-          (Binary Op.SUBTRACT
+          (Binary Op.SUB
             (Binary Op.DIV
               (Num 6)
               (Num 3)

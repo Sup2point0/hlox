@@ -12,7 +12,7 @@ data Op2 =
   | LT | LTEQ
   | GT | GTEQ
 
-  | ADD | SUBTRACT
+  | ADD | SUB
   | MULT | DIV
 
   deriving Eq
@@ -29,7 +29,7 @@ instance Show Op2 where
   show GT   = " > "
   show GTEQ = " >= "
 
-  show ADD      = " + "
-  show SUBTRACT = " - "
-  show MULT     = " * "
-  show DIV      = " / "
+  show ADD  = " + "
+  show SUB  = " - "
+  show MULT = " * "
+  show DIV  = " / "
