@@ -94,7 +94,7 @@ eval' :: Node -> EvalEnv -> Either EvalError EvalResult
 eval' (Ast.Stmt node) = eval node
 
 eval' (Ast.Binary Op.EQ   left right) = evalBinaryEqOrd (==) left right
-eval' (Ast.Binary Op.NEQ  left right) = evalBinaryEqOrd (==) left right
+eval' (Ast.Binary Op.NEQ  left right) = evalBinaryEqOrd (/=) left right
 eval' (Ast.Binary Op.LT   left right) = evalBinaryEqOrd (<)  left right
 eval' (Ast.Binary Op.LTEQ left right) = evalBinaryEqOrd (<=) left right
 eval' (Ast.Binary Op.GT   left right) = evalBinaryEqOrd (>)  left right
