@@ -93,7 +93,7 @@ parseExpr = parseAsgn
 -- | Parse `lvalue = rvalue`
 parseAsgn :: Parser Ast.Node
 parseAsgn tokens = do
-  (tokens', lvalue) <- parseEquality tokens
+  (tokens', lvalue) <- parseOr tokens
   parseAsgnVar lvalue tokens'
 
 parseAsgnVar :: Ast.Node -> Parser Ast.Node
@@ -106,6 +106,18 @@ parseAsgnVar lvalue ((Tk.EQ):_)
   = Left (Err.InvalidAssignmentTarget lvalue)
 
 parseAsgnVar value tokens = return (tokens, value)
+
+-- | Parse `_ or _`
+parseOr :: Parser Ast.Node
+parseOr tokens = do
+  (tokens', left) <- parseAnd tokens
+  recurseBinary [(Tk.OR, Op.OR)] parseAnd left tokens'
+
+-- | Parse `_ and _`
+parseAnd :: Parser Ast.Node
+parseAnd tokens = do
+  (tokens', left) <- parseEquality tokens
+  recurseBinary [(Tk.AND, Op.AND)] parseEquality left tokens'
 
 -- | Parse `_ == _`
 parseEquality :: Parser Ast.Node

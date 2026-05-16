@@ -15,6 +15,8 @@ data Op2 =
   | ADD | SUB
   | MULT | DIV
 
+  | OR | AND
+
   deriving Eq
 
 
@@ -33,3 +35,6 @@ instance Show Op2 where
   show SUB  = " - "
   show MULT = " * "
   show DIV  = " / "
+
+  show OR  = " or "
+  show AND = " and "

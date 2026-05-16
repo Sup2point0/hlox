@@ -59,31 +59,53 @@ eval (Ast.Print node) env = do
 eval (Ast.If cond node) env = do
   (cond', env') <- eval cond env
   case cond' of
-    Obj.Boolean b -> if b then eval node env' else return (Obj.Nil, env')
-    ex            -> Left (Err.TypeError ("boolean") (showType ex))
+    Obj.Boolean True  -> eval node env'
+    Obj.Boolean False -> return (Obj.Nil, env')
+    ex                -> Left (Err.TypeError "boolean" (showType ex))
 
 eval (Ast.IfElse cond true false) env = do
   (cond', env') <- eval cond env
   case cond' of
-    Obj.Boolean b -> eval (if b then true else false) env'
-    ex            -> Left (Err.TypeError ("boolean") (showType ex))
-
+    Obj.Boolean True  -> eval true env'
+    Obj.Boolean False -> eval false env'
+    ex                -> Left (Err.TypeError "boolean" (showType ex))
 
 eval (Ast.AsgnVar ident node) env = do
   (val, env') <- eval node env
   env'' <- Env.set ident val env'
   return (val, env'')
 
-eval (Ast.Var ident) env
-  = case Env.get ident env of
-      Just val -> return (val, env)
-      Nothing  -> Left (Err.UndefinedVariable ident)
+eval (Ast.Binary Op.OR left right) env = do
+  (left', env') <- eval left env
+  case left' of
+    Obj.Boolean True  -> return (left', env')
+    Obj.Boolean False -> do
+      (right', env'') <- eval right env'
+      case right' of
+        Obj.Boolean b -> return (right', env')
+        ex            -> Left (Err.TypeError "boolean" (showType ex))
+    ex -> Left (Err.TypeError "boolean" (showType ex))
+
+eval (Ast.Binary Op.AND left right) env = do
+  (left', env') <- eval left env
+  case left' of
+    Obj.Boolean b1 -> do
+      (right', env'') <- eval right env'
+      case right' of
+        Obj.Boolean b2 -> return (Obj.Boolean (b1 && b2), env')
+        ex             -> Left (Err.TypeError "boolean" (showType ex))
+    ex -> Left (Err.TypeError "boolean" (showType ex))
 
 eval (Ast.Unary Op.NEGATE node) env = do
   (node', env') <- eval node env
   case node' of
     Obj.Number n -> return (Obj.Number (-n), env')
     ex           -> Left (Err.TypeError "number" (showType ex))
+
+eval (Ast.Var ident) env
+  = case Env.get ident env of
+      Just val -> return (val, env)
+      Nothing  -> Left (Err.UndefinedVariable ident)
 
 -- forwarding required for nice eta reduction on the rest
 eval node env = eval' node env

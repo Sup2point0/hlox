@@ -34,6 +34,7 @@ testParseAtom = testCollection "parseAtom"
 testParseExpr :: TestTree
 testParseExpr = testCollection "parseExpr"
   [
+  -- single
     parse "0 == 1;" === Right [
       Stmt $ Binary Op.EQ (Num 0) (Num 1)
     ]
@@ -50,12 +51,27 @@ testParseExpr = testCollection "parseExpr"
         (Num 0)
     ]
 
+  , parse "x or y;" === Right [
+    Stmt $ Binary Op.OR (Var "x") (Var "y")
+  ]
+
+  , parse "x and y;" === Right [
+    Stmt $ Binary Op.AND (Var "x") (Var "y")
+  ]
+
   -- precedence
   , parse "1 + 2 == 3;"
     === Right [
       Stmt $ Binary Op.EQ
         (Binary Op.ADD (Num 1) (Num 2))
         (Num 3)
+    ]
+
+  , parse "1 == 1 and 2 != 3;"
+    === Right [
+      Stmt $ Binary Op.AND
+        (Binary Op.EQ (Num 1) (Num 1))
+        (Binary Op.NEQ (Num 2) (Num 3))
     ]
 
   -- associativity

@@ -23,17 +23,20 @@ parse src = Either.either
 testEvaluator :: [TestTree]
 testEvaluator =
   [
-    testEval
+    testExpr
   , testState
   , testStateErrors
   , testScope
   , testIf
   ]
   
-testEval :: TestTree
-testEval = testCollection "eval"
+testExpr :: TestTree
+testExpr = testCollection "expr"
   [
-    evalProgram (parse "0;")
+    evalProgram (parse "nil;")
+    === Right (Obj.Nil)
+
+  , evalProgram (parse "0;")
     === Right (Obj.Number 0)
 
   , evalProgram (parse "true;")
@@ -48,6 +51,9 @@ testEval = testCollection "eval"
   , evalProgram (parse "1 + 2 == 3;")
     === Right (Obj.Boolean True)
 
+  , evalProgram (parse "1 + 2 != 3;")
+    === Right (Obj.Boolean False)
+
   , evalProgram (parse "0 < 1;")
     === Right (Obj.Boolean True)
 
@@ -60,9 +66,6 @@ testEval = testCollection "eval"
   , evalProgram (parse "10 / 2 >= 5;")
     === Right (Obj.Boolean True)
 
-  , Either.isLeft (evalProgram (parse "5 + nil != 1;"))
-    === True
-
   , evalProgram (parse "1 + 2; nil == nil;")
     === Right (Obj.Boolean True)
 
@@ -71,6 +74,25 @@ testEval = testCollection "eval"
 
   , evalProgram (parse "var x = 0; (x = 1) > 0;")
     === Right (Obj.Boolean True)
+
+  , evalProgram (parse "1 == 1 and 2 == 2;")
+    === Right (Obj.Boolean True)
+
+  , evalProgram (parse "1 == 1 and 2 == 3;")
+    === Right (Obj.Boolean False)
+
+  , evalProgram (parse "1 == 1 or 2 == 3;")
+    === Right (Obj.Boolean True)
+
+  , evalProgram (parse "1 != 1 or 2 == 3;")
+    === Right (Obj.Boolean False)
+  ]
+
+testExprErrors :: TestTree
+testExprErrors = testCollection "expr errors"
+  [
+    Either.isLeft (evalProgram (parse "5 + nil != 1;"))
+    === True
   ]
 
 testState :: TestTree
@@ -90,7 +112,7 @@ testState = testCollection "state"
   ]
 
 testStateErrors :: TestTree
-testStateErrors = testCollection "state"
+testStateErrors = testCollection "state errors"
   [
     evalProgram (parse "var x = 1; print x; y;")
     === Left (Err.UndefinedVariable "y")

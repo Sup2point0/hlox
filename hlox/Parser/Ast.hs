@@ -44,8 +44,8 @@ instance Show Node where
 
   show (AsgnVar ident node) = show ident ++ " = " ++ show node ++ ";"
 
-  show (Binary op left right) = "(" ++ show left ++ show op ++ show right ++ ")"
-  show (Unary op node) = show op ++ show node
+  show (Binary op l r)  = "(" ++ show l ++ show op ++ show r ++ ")"
+  show (Unary op node)  = show op ++ show node
 
   show (Var ident) = "'" ++ show ident ++ "'"
   show (Str str)   = "\"" ++ str ++ "\""
