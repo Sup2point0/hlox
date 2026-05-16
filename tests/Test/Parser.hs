@@ -25,6 +25,10 @@ testParseAtom = testCollection "parseAtom"
     parse "0;" === Right [
       Stmt $ Num 0
     ]
+
+  , parse "-1;" === Right [
+      Stmt $ Unary Op.NEGATE (Num 1)
+    ]
   ]
 
 testParseExpr :: TestTree
@@ -32,6 +36,18 @@ testParseExpr = testCollection "parseExpr"
   [
     parse "0 == 1;" === Right [
       Stmt $ Binary Op.EQ (Num 0) (Num 1)
+    ]
+
+  , parse "-1 == -1;" === Right [
+      Stmt $ Binary Op.EQ
+        (Unary Op.NEGATE (Num 1))
+        (Unary Op.NEGATE (Num 1))
+    ]
+
+  , parse "-1 < 0;" === Right [
+      Stmt $ Binary Op.LT
+        (Unary Op.NEGATE (Num 1))
+        (Num 0)
     ]
 
   -- precedence

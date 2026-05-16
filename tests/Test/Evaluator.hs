@@ -48,6 +48,15 @@ testEval = testCollection "eval"
   , evalProgram (parse "1 + 2 == 3;")
     === Right (Obj.Boolean True)
 
+  , evalProgram (parse "0 < 1;")
+    === Right (Obj.Boolean True)
+
+  , evalProgram (parse "0 > 1;")
+    === Right (Obj.Boolean False)
+
+  , evalProgram (parse "-1 > 0;")
+    === Right (Obj.Boolean False)
+
   , evalProgram (parse "10 / 2 >= 5;")
     === Right (Obj.Boolean True)
 
@@ -55,6 +64,12 @@ testEval = testCollection "eval"
     === True
 
   , evalProgram (parse "1 + 2; nil == nil;")
+    === Right (Obj.Boolean True)
+
+  , evalProgram (parse "var x = 0; x = 1;")
+    === Right (Obj.Number 1)
+
+  , evalProgram (parse "var x = 0; (x = 1) > 0;")
     === Right (Obj.Boolean True)
   ]
 
@@ -157,4 +172,34 @@ testIf = testCollection "if"
 
   , evalProgram (parse "if (false) 6; else 9;")
     === Right (Obj.Number 9)
+
+  , evalProgram (parse "if (1 < 2) 6; else 9;")
+    === Right (Obj.Number 6)
+
+  , evalProgram (parse "if (1 >= 2) 6; else 9;")
+    === Right (Obj.Number 9)
+
+  , evalProgram (parse "\
+        \  var x = 0;          \
+        \  var r = 0;          \
+        \  if ((x = 1) > 0) {  \
+        \    r = 1;            \
+        \  } else {            \
+        \    r = 2;            \
+        \  }                   \
+        \  r;                  \
+      \")
+    === Right (Obj.Number 1)
+
+  , evalProgram (parse "\
+        \  var x = 0;          \
+        \  var r = 0;          \
+        \  if ((x = -1) > 0) {  \
+        \    r = 1;            \
+        \  } else {            \
+        \    r = 2;            \
+        \  }                   \
+        \  r;                  \
+      \")
+    === Right (Obj.Number 2)
   ]

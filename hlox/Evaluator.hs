@@ -82,7 +82,7 @@ eval (Ast.Var ident) env
 eval (Ast.Unary Op.NEGATE node) env = do
   (node', env') <- eval node env
   case node' of
-    Obj.Number n -> return (Obj.Number n, env')
+    Obj.Number n -> return (Obj.Number (-n), env')
     ex           -> Left (Err.TypeError "number" (showType ex))
 
 -- forwarding required for nice eta reduction on the rest
