@@ -52,14 +52,27 @@ eval (Ast.DeclVar ident node) env = do
   (val, env') <- eval node env
   return (val, Env.define ident val env')
 
+eval (Ast.Print node) env = do
+  (node', env') <- eval node env
+  return (trace ("hlox> " ++ show node') Obj.Nil, env')
+
+eval (Ast.If cond node) env = do
+  (cond', env') <- eval cond env
+  case cond' of
+    Obj.Boolean b -> if b then eval node env' else return (Obj.Nil, env')
+    ex            -> Left (Err.TypeError ("boolean") (showType ex))
+
+eval (Ast.IfElse cond true false) env = do
+  (cond', env') <- eval cond env
+  case cond' of
+    Obj.Boolean b -> eval (if b then true else false) env'
+    ex            -> Left (Err.TypeError ("boolean") (showType ex))
+
+
 eval (Ast.AsgnVar ident node) env = do
   (val, env') <- eval node env
   env'' <- Env.set ident val env'
   return (val, env'')
-
-eval (Ast.Print node) env = do
-  (node', env') <- eval node env
-  return (trace ("hlox> " ++ show node') Obj.Nil, env')
 
 eval (Ast.Var ident) env
   = case Env.get ident env of

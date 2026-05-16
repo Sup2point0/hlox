@@ -15,6 +15,7 @@ testParser =
     testParseAtom
   , testParseExpr
   , testParseBlock
+  , testParseIf
   , testParseProgram
   ]
 
@@ -66,6 +67,34 @@ testParseExpr = testCollection "parseExpr"
         (Binary Op.LTEQ
           (Unary Op.NEGATE (Num 5))
           (Binary Op.ADD (Num 4) (Num 1))
+        )
+    ]
+  ]
+
+testParseIf :: TestTree
+testParseIf = testCollection "parseIf"
+  [
+    parse "if (true) print 1;"
+    === Right [
+      If (Bool True) (Print (Num 1))
+    ]
+  
+  , parse "if (true) { print 2; }"
+    === Right [
+      If (Bool True) (Block [Print (Num 2)])
+    ]
+
+  , parse "if (false) print 1; else print 2;"
+    === Right [
+      IfElse (Bool False) (Print (Num 1)) (Print (Num 2))
+    ]
+
+  , parse "if ('first') if ('second') x; else y;"
+    === Right [
+      If (Str "first")
+        (IfElse (Str "second")
+          (Stmt (Var "x"))
+          (Stmt (Var "y"))
         )
     ]
   ]

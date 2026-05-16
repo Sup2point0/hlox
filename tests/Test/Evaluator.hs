@@ -27,6 +27,7 @@ testEvaluator =
   , testState
   , testStateErrors
   , testScope
+  , testIf
   ]
   
 testEval :: TestTree
@@ -118,4 +119,42 @@ testScope = testCollection "scope"
         \  y;                    \
       \")
     === Right (Obj.String "success!")
+
+  , evalProgram (parse "\
+        \  var scoped = 0;      \
+        \  {                    \
+        \    var scoped = 1;    \
+        \    {                  \
+        \      var scoped = 2;  \
+        \      scoped = 3;      \
+        \    }                  \
+        \    scoped = 4;        \
+        \  }                    \
+        \  scoped;              \
+      \")
+    === Right (Obj.Number 0)
+
+  , evalProgram (parse "\
+        \  var a = 1;        \
+        \  var r = 0;        \
+        \  {                 \
+        \    var a = a + 2;  \
+        \    r = a;          \
+        \  }                 \
+        \  r;                \
+      \")
+    === Right (Obj.Number 3)
+  ]
+
+testIf :: TestTree
+testIf = testCollection "if"
+  [
+    evalProgram (parse "if (true) 5;")
+    === Right (Obj.Number 5)
+
+  , evalProgram (parse "if (true) 6; else 9;")
+    === Right (Obj.Number 6)
+
+  , evalProgram (parse "if (false) 6; else 9;")
+    === Right (Obj.Number 9)
   ]

@@ -42,16 +42,19 @@ define :: String -> EvalObject -> EvalEnv -> EvalEnv
 define ident val (Env parent vars)
   = Env parent (Map.insert ident val vars)
 
--- | Set the value of `ident` to `val` in the environment, or if it not defined, the closest parent environment where it is defined.
+-- | Set the value of `ident` to `val` in the environment, potentially in a parent environment.
 set :: String -> EvalObject -> EvalEnv -> Either EvalError EvalEnv
+
 set ident val (Env parent vars)
-  | ident `Map.member` vars = Right $ Env parent (Map.insert ident val vars)
-  | otherwise
-  = case parent of
-      Just p -> do
-        p' <- set ident val p
-        return (Env (Just p') vars)
-      Nothing -> Left (Err.UndefinedVariable ident)
+  | ident `Map.member` vars
+  = Right (Env parent (Map.insert ident val vars))
+
+set ident val (Env (Just parent) vars) = do
+  parent' <- set ident val parent
+  return (Env (Just parent') vars)
+
+set ident val (Env Nothing vars)
+  = Left (Err.UndefinedVariable ident)
 
 
 -- | Extract the parent environment of a scoped environment.

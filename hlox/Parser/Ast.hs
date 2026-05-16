@@ -10,10 +10,16 @@ type Program = [Node]
 data Node =
     Block [Node]
 
-  | Stmt Node
+  -- declarations
   | DeclVar String Node
-  | Print Node
 
+  -- statements
+  | Stmt Node
+  | Print Node
+  | If Node Node
+  | IfElse Node Node Node
+
+  -- expressions
   | AsgnVar String Node
   
   | Binary Op2 Node Node
@@ -29,11 +35,14 @@ data Node =
 
 instance Show Node where
   show (Block nodes)        = " { " ++ List.intercalate " " (map show nodes) ++ " } "
-  show (Stmt node)          = show node ++ ";"
-
   show (DeclVar ident node) = "var " ++ show ident ++ " = " ++ show node ++ ";"
+
+  show (Stmt node)    = show node ++ ";"
+  show (Print node)   = "print (" ++ show node ++ ")"
+  show (If c node)    = "if (" ++ show c ++ ") " ++ show node
+  show (IfElse c t f) = "if (" ++ show c ++ ") " ++ show t ++ " else " ++ show f
+
   show (AsgnVar ident node) = show ident ++ " = " ++ show node ++ ";"
-  show (Print node)         = "print (" ++ show node ++ ")"
 
   show (Binary op left right) = "(" ++ show left ++ show op ++ show right ++ ")"
   show (Unary op node) = show op ++ show node
