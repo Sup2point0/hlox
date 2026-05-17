@@ -18,6 +18,7 @@ testParser =
   , testParseIf
   , testParseWhile
   , testParseFor
+  , testParseCall
   ]
 
 testParseAtom :: TestTree
@@ -225,4 +226,32 @@ testParseFor = testCollection "for"
         ])
     ]
   ]
+  ]
+
+testParseCall :: TestTree
+testParseCall = testCollection "call"
+  [
+    parse "test();" === Right [
+      Stmt $ Call (Var "test") []
+    ]
+  
+  , parse "tests(1, 2, 3);" === Right [
+      Stmt $ Call (Var "tests") [Num 1, Num 2, Num 3]
+    ]
+  
+  , parse "poly()()();" === Right [
+      Stmt $ Call (
+        Call (
+          Call (Var "poly") []
+        ) []
+      ) []
+    ]
+  
+  , parse "poly(1)(2)(3);" === Right [
+      Stmt $ Call (
+        Call (
+          Call (Var "poly") [Num 1]
+        ) [Num 2]
+      ) [Num 3]
+    ]
   ]

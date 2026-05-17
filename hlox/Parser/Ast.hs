@@ -1,6 +1,6 @@
 module Parser.Ast where
 
-import Data.List qualified as List
+import Data.List (intercalate)
 
 import Parser.Ops
 
@@ -22,6 +22,7 @@ data Node =
 
   -- expressions
   | AsgnVar String Node
+  | Call Node [Node]
   
   | Binary Op2 Node Node
   | Unary Op1 Node
@@ -35,7 +36,7 @@ data Node =
 
 
 instance Show Node where
-  show (Block nodes)        = " { " ++ List.intercalate " " (map show nodes) ++ " } "
+  show (Block nodes)        = " { " ++ (intercalate " " (map show nodes)) ++ " } "
   show (DeclVar ident node) = "var " ++ show ident ++ " = " ++ show node ++ ";"
 
   show (Stmt node)    = show node ++ ";"
@@ -45,6 +46,7 @@ instance Show Node where
   show (While c body) = "while (" ++ show c ++ ")" ++ show body
 
   show (AsgnVar ident node) = show ident ++ " = " ++ show node ++ ";"
+  show (Call callee args)   = show callee ++ "(" ++ (intercalate ", " (map show args)) ++ ")"
 
   show (Binary op l r)  = "(" ++ show l ++ show op ++ show r ++ ")"
   show (Unary op node)  = show op ++ show node

@@ -1,7 +1,5 @@
 module Parser where
 
-import Debug.Trace
-
 import Data.Either qualified as Either
 import Data.List qualified as List
 import Data.Maybe qualified as Maybe
@@ -224,13 +222,45 @@ parseFactor tokens = do
       ]
 
 
+-- | Parse `-x`
 parseUnary :: Parser Ast.Node
 parseUnary (Tk.MINUS:ts) = do
   (tokens', expr) <- parseUnary ts
   return (tokens', Ast.Unary Op.NEGATE expr)
-parseUnary tokens = parseAtom tokens
+parseUnary tokens = parseCall tokens
 
 
+-- | Parse `x()`
+parseCall :: Parser Ast.Node
+parseCall tokens = do
+  (tokens', expr) <- parseAtom tokens
+  finishCall expr tokens'
+
+
+finishCall :: Ast.Node -> Parser Ast.Node
+
+finishCall callee (Tk.LPAREN:Tk.RPAREN:ts)
+  = finishCall (Ast.Call callee []) ts
+
+finishCall callee (Tk.LPAREN:ts) = do
+  (tokens', args) <- parseArgs ts
+  finishCall (Ast.Call callee args) tokens'
+
+finishCall callee tokens = Right (tokens, callee)
+
+
+parseArgs :: Parser [Ast.Node]
+parseArgs tokens = do
+  (tokens', arg) <- parseExpr tokens
+  case tokens' of
+    (Tk.RPAREN:ts') -> return (ts', [arg])
+    (Tk.COMMA:ts') -> do
+      (tokens'', args) <- parseArgs ts'
+      return (tokens'', arg:args)
+    _ -> Left (Err.UnexpectedInput tokens')
+
+
+-- | Parse a primary expression
 parseAtom :: Parser Ast.Node
 
 parseAtom ((Tk.IDENT v):ts) = Right (ts, Ast.Var v)
