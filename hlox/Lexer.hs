@@ -111,7 +111,7 @@ token =
   <| Right Tk.ELSE   <$ string "else"
   <| Right Tk.FALSE  <$ string "false"
   <| Right Tk.FUN    <$ string "fun"
-  <| Right Tk.FOR    <$ string "for'"
+  <| Right Tk.FOR    <$ string "for"
   <| Right Tk.IF     <$ string "if"
   <| Right Tk.NIL    <$ string "nil"
   <| Right Tk.OR     <$ string "or"
