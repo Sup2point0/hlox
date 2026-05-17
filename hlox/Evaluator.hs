@@ -56,10 +56,10 @@ eval (Ast.Print node) env = do
   (node', env') <- eval node env
   return (trace ("hlox> " ++ show node') Obj.Nil, env')
 
-eval (Ast.If cond node) env = do
+eval (Ast.If cond body) env = do
   (cond', env') <- eval cond env
   case cond' of
-    Obj.Boolean True  -> eval node env'
+    Obj.Boolean True  -> eval body env'
     Obj.Boolean False -> return (Obj.Nil, env')
     ex                -> Left (Err.TypeError "boolean" (showType ex))
 
@@ -68,6 +68,15 @@ eval (Ast.IfElse cond true false) env = do
   case cond' of
     Obj.Boolean True  -> eval true env'
     Obj.Boolean False -> eval false env'
+    ex                -> Left (Err.TypeError "boolean" (showType ex))
+
+eval node@(Ast.While cond body) env = do
+  (cond', env') <- eval cond env
+  case cond' of
+    Obj.Boolean True  -> do
+      (_, env'') <- eval body env'
+      eval node env''
+    Obj.Boolean False -> return (Obj.Nil, env')
     ex                -> Left (Err.TypeError "boolean" (showType ex))
 
 eval (Ast.AsgnVar ident node) env = do

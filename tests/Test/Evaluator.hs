@@ -28,6 +28,7 @@ testEvaluator =
   , testStateErrors
   , testScope
   , testIf
+  , testLoop
   ]
   
 testExpr :: TestTree
@@ -224,4 +225,33 @@ testIf = testCollection "if"
         \  r;                  \
       \")
     === Right (Obj.Number 2)
+  ]
+
+testLoop :: TestTree
+testLoop = testCollection "loop"
+  [
+    evalProgram (parse "\
+        \  var x = 0;        \
+        \  while (x < 10) {  \
+        \    x = x + 1;      \
+        \  }                 \
+        \  x;                \
+      \")
+    === Right (Obj.Number 10)
+
+  , evalProgram (parse "\
+        \  var p = 42;      \
+        \  var q = 69;      \
+        \                   \
+        \  var i = p;       \
+        \  var r = 0;       \
+        \                   \
+        \  while (i > 0) {  \
+        \    r = r + q;     \
+        \    i = i - 1;     \
+        \  }                \
+        \                   \
+        \  r;               \
+      \")
+    === Right (Obj.Number 2898)
   ]

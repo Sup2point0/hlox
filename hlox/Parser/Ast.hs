@@ -18,6 +18,7 @@ data Node =
   | Print Node
   | If Node Node
   | IfElse Node Node Node
+  | While Node Node
 
   -- expressions
   | AsgnVar String Node
@@ -39,8 +40,9 @@ instance Show Node where
 
   show (Stmt node)    = show node ++ ";"
   show (Print node)   = "print (" ++ show node ++ ")"
-  show (If c node)    = "if (" ++ show c ++ ") " ++ show node
+  show (If c body)    = "if (" ++ show c ++ ") " ++ show body
   show (IfElse c t f) = "if (" ++ show c ++ ") " ++ show t ++ " else " ++ show f
+  show (While c body) = "while (" ++ show c ++ ")" ++ show body
 
   show (AsgnVar ident node) = show ident ++ " = " ++ show node ++ ";"
 

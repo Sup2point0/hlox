@@ -73,6 +73,13 @@ parseStmt (Tk.IF:ts) = do
     _
       -> return (tokens4, Ast.If cond true)
 
+parseStmt (Tk.WHILE:ts) = do
+  tokens1 <- expect Tk.LPAREN ts
+  (tokens2, cond) <- parseExpr tokens1
+  tokens3 <- expect Tk.RPAREN tokens2
+  (tokens4, body) <- parseStmt tokens3
+  return (tokens4, Ast.While cond body)
+
 parseStmt tokens = do
   (tokens', expr) <- parseExpr tokens
   tokens'' <- expect Tk.SEMICOLON tokens'

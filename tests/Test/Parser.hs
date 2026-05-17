@@ -16,6 +16,7 @@ testParser =
   , testParseExpr
   , testParseBlock
   , testParseIf
+  , testParseWhile
   , testParseProgram
   ]
 
@@ -172,6 +173,35 @@ testParseBlock = testCollection "parseBlock"
       Stmt (Str "1")
     , Block [Stmt (Str "2")]
     , Stmt (Str "3")
+    ]
+  ]
+
+testParseWhile :: TestTree
+testParseWhile = testCollection "parseWhile"
+  [
+    parse "while (true) {}" === Right [
+      While (Bool True) (Block [])
+    ]
+
+  , parse "while (1 == 1) print 1;" === Right [
+      While
+        (Binary Op.EQ (Num 1) (Num 1))
+        (Print (Num 1))
+    ]
+
+  , parse "\
+        \  while (x < 10) {  \
+        \    x = x + 1;      \
+        \    print x;        \
+        \  }                 \
+      \"
+    === Right [
+      While
+        (Binary Op.LT (Var "x") (Num 10))
+        (Block [
+          Stmt $ AsgnVar "x" (Binary Op.ADD (Var "x") (Num 1))
+        , Print (Var "x")
+        ])
     ]
   ]
 
