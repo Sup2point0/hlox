@@ -38,6 +38,7 @@ parseDecl :: Parser Ast.Node
 parseDecl (Tk.VAR:ts') = parseDeclVar ts'
 parseDecl tokens = parseStmt tokens
 
+
 -- | Parse `var x = _`
 parseDeclVar :: Parser Ast.Node
 
@@ -47,6 +48,7 @@ parseDeclVar ((Tk.IDENT v):(Tk.EQ):ts) = do
   return (tokens'', Ast.DeclVar v expr)
 
 parseDeclVar tokens = Left (Err.UnexpectedInput tokens)
+
 
 -- | Parse a statement.
 parseStmt :: Parser Ast.Node
@@ -80,10 +82,53 @@ parseStmt (Tk.WHILE:ts) = do
   (tokens4, body) <- parseStmt tokens3
   return (tokens4, Ast.While cond body)
 
+parseStmt (Tk.FOR:ts) = do
+  tokens1 <- expect Tk.LPAREN ts
+  
+  (tokens2, init) <- case tokens1 of
+    (Tk.SEMICOLON:ts') -> return (ts', Nothing)
+    (Tk.VAR:ts') -> do
+      (ts'', init') <- parseDeclVar ts'
+      return (ts'', Just init')
+    ts' -> do
+      (ts'', init') <- parseStmt ts'
+      return (ts'', Just init')
+  
+  (tokens3, cond) <- case tokens2 of
+    (Tk.SEMICOLON:ts') -> return (ts', Nothing)
+    ts' -> do
+      (ts'', cond') <- parseExpr ts'
+      ts''' <- expect Tk.SEMICOLON ts''
+      return (ts''', Just cond')
+
+  (tokens4, incr) <- case tokens3 of
+    (Tk.RPAREN:ts') -> return (ts', Nothing)
+    ts' -> do
+      (ts'', incr') <- parseExpr ts'
+      ts''' <- expect Tk.RPAREN ts''
+      return (ts''', Just incr')
+
+  (tokens5, body) <- parseStmt tokens4
+
+  return (tokens5, Ast.Block (
+      Maybe.catMaybes [
+        init
+      , Just $ Ast.While
+          (Maybe.fromMaybe (Ast.Bool True) cond)
+          (Ast.Block
+            (Maybe.catMaybes [
+              Just body
+            , incr
+            ])
+          )
+      ]
+    ))
+
 parseStmt tokens = do
   (tokens', expr) <- parseExpr tokens
   tokens'' <- expect Tk.SEMICOLON tokens'
   return (tokens'', Ast.Stmt expr)
+
 
 -- | Parse `{ _ }`
 parseBlock :: Parser [Ast.Node]
@@ -93,15 +138,18 @@ parseBlock tokens = do
   (tokens'', stmts) <- parseBlock tokens'
   return (tokens'', stmt:stmts)
 
+
 -- | Parse an expression.
 parseExpr :: Parser Ast.Node
 parseExpr = parseAsgn
+
 
 -- | Parse `lvalue = rvalue`
 parseAsgn :: Parser Ast.Node
 parseAsgn tokens = do
   (tokens', lvalue) <- parseOr tokens
   parseAsgnVar lvalue tokens'
+
 
 parseAsgnVar :: Ast.Node -> Parser Ast.Node
 
@@ -114,17 +162,20 @@ parseAsgnVar lvalue ((Tk.EQ):_)
 
 parseAsgnVar value tokens = return (tokens, value)
 
+
 -- | Parse `_ or _`
 parseOr :: Parser Ast.Node
 parseOr tokens = do
   (tokens', left) <- parseAnd tokens
   recurseBinary [(Tk.OR, Op.OR)] parseAnd left tokens'
 
+
 -- | Parse `_ and _`
 parseAnd :: Parser Ast.Node
 parseAnd tokens = do
   (tokens', left) <- parseEquality tokens
   recurseBinary [(Tk.AND, Op.AND)] parseEquality left tokens'
+
 
 -- | Parse `_ == _`
 parseEquality :: Parser Ast.Node
@@ -136,6 +187,7 @@ parseEquality tokens = do
         (Tk.EQQ, Op.EQ),
         (Tk.NEQ, Op.NEQ)
       ]
+
 
 parseComparison :: Parser Ast.Node
 parseComparison tokens = do
@@ -149,6 +201,7 @@ parseComparison tokens = do
         (Tk.GTEQ, Op.GTEQ)
       ]
 
+
 parseTerm :: Parser Ast.Node
 parseTerm tokens = do
     (tokens', left) <- parseFactor tokens
@@ -159,6 +212,7 @@ parseTerm tokens = do
         (Tk.MINUS, Op.SUB) 
       ]
 
+
 parseFactor :: Parser Ast.Node
 parseFactor tokens = do
     (tokens', left) <- parseUnary tokens
@@ -168,6 +222,7 @@ parseFactor tokens = do
         (Tk.STAR, Op.MULT),
         (Tk.SLASH, Op.DIV) 
       ]
+
 
 parseUnary :: Parser Ast.Node
 parseUnary (Tk.MINUS:ts) = do

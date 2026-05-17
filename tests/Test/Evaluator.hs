@@ -123,64 +123,64 @@ testScope :: TestTree
 testScope = testCollection "scope"
   [
     evalProgram (parse "\
-        \  var x = 0;  \
-        \  {           \
-        \    x = 1;    \
-        \  }           \
-        \  x;          \
-      \")
+      \  var x = 0;  \
+      \  {           \
+      \    x = 1;    \
+      \  }           \
+      \  x;          \
+    \")
     === Right (Obj.Number 1)
   
   , evalProgram (parse "\
-        \  var x = 0;    \
-        \  {             \
-        \    var x = 1;  \
-        \  }             \
-        \  x;            \
-      \")
+      \  var x = 0;    \
+      \  {             \
+      \    var x = 1;  \
+      \  }             \
+      \  x;            \
+    \")
     === Right (Obj.Number 0)
 
   , evalProgram (parse "\
-        \  var x = \"don't touch!\";  \
-        \  {                         \
-        \    var x = 'oh no';        \
-        \  }                         \
-        \  x;                        \
-      \")
+      \  var x = \"don't touch!\";  \
+      \  {                         \
+      \    var x = 'oh no';        \
+      \  }                         \
+      \  x;                        \
+    \")
     === Right (Obj.String "don't touch!")
 
   , evalProgram (parse "\
-        \  var y = 'do touch!';  \
-        \  {                     \
-        \    y = 'success!';     \
-        \  }                     \
-        \  y;                    \
-      \")
+      \  var y = 'do touch!';  \
+      \  {                     \
+      \    y = 'success!';     \
+      \  }                     \
+      \  y;                    \
+    \")
     === Right (Obj.String "success!")
 
   , evalProgram (parse "\
-        \  var scoped = 0;      \
-        \  {                    \
-        \    var scoped = 1;    \
-        \    {                  \
-        \      var scoped = 2;  \
-        \      scoped = 3;      \
-        \    }                  \
-        \    scoped = 4;        \
-        \  }                    \
-        \  scoped;              \
-      \")
+      \  var scoped = 0;      \
+      \  {                    \
+      \    var scoped = 1;    \
+      \    {                  \
+      \      var scoped = 2;  \
+      \      scoped = 3;      \
+      \    }                  \
+      \    scoped = 4;        \
+      \  }                    \
+      \  scoped;              \
+    \")
     === Right (Obj.Number 0)
 
   , evalProgram (parse "\
-        \  var a = 1;        \
-        \  var r = 0;        \
-        \  {                 \
-        \    var a = a + 2;  \
-        \    r = a;          \
-        \  }                 \
-        \  r;                \
-      \")
+      \  var a = 1;        \
+      \  var r = 0;        \
+      \  {                 \
+      \    var a = a + 2;  \
+      \    r = a;          \
+      \  }                 \
+      \  r;                \
+    \")
     === Right (Obj.Number 3)
   ]
 
@@ -203,27 +203,27 @@ testIf = testCollection "if"
     === Right (Obj.Number 9)
 
   , evalProgram (parse "\
-        \  var x = 0;          \
-        \  var r = 0;          \
-        \  if ((x = 1) > 0) {  \
-        \    r = 1;            \
-        \  } else {            \
-        \    r = 2;            \
-        \  }                   \
-        \  r;                  \
-      \")
+      \  var x = 0;          \
+      \  var r = 0;          \
+      \  if ((x = 1) > 0) {  \
+      \    r = 1;            \
+      \  } else {            \
+      \    r = 2;            \
+      \  }                   \
+      \  r;                  \
+    \")
     === Right (Obj.Number 1)
 
   , evalProgram (parse "\
-        \  var x = 0;          \
-        \  var r = 0;          \
-        \  if ((x = -1) > 0) {  \
-        \    r = 1;            \
-        \  } else {            \
-        \    r = 2;            \
-        \  }                   \
-        \  r;                  \
-      \")
+      \  var x = 0;          \
+      \  var r = 0;          \
+      \  if ((x = -1) > 0) {  \
+      \    r = 1;            \
+      \  } else {            \
+      \    r = 2;            \
+      \  }                   \
+      \  r;                  \
+    \")
     === Right (Obj.Number 2)
   ]
 
@@ -231,27 +231,40 @@ testLoop :: TestTree
 testLoop = testCollection "loop"
   [
     evalProgram (parse "\
-        \  var x = 0;        \
-        \  while (x < 10) {  \
-        \    x = x + 1;      \
-        \  }                 \
-        \  x;                \
-      \")
+      \  var x = 0;        \
+      \  while (x < 10) {  \
+      \    x = x + 1;      \
+      \  }                 \
+      \  x;                \
+    \")
     === Right (Obj.Number 10)
 
   , evalProgram (parse "\
-        \  var p = 42;      \
-        \  var q = 69;      \
-        \                   \
-        \  var i = p;       \
-        \  var r = 0;       \
-        \                   \
-        \  while (i > 0) {  \
-        \    r = r + q;     \
-        \    i = i - 1;     \
-        \  }                \
-        \                   \
-        \  r;               \
-      \")
+      \  var p = 42;      \
+      \  var q = 69;      \
+      \                   \
+      \  var i = p;       \
+      \  var r = 0;       \
+      \                   \
+      \  while (i > 0) {  \
+      \    r = r + q;     \
+      \    i = i - 1;     \
+      \  }                \
+      \                   \
+      \  r;               \
+    \")
     === Right (Obj.Number 2898)
+
+  , evalProgram (parse "\
+      \  var a = 0;                                  \
+      \  var temp = 0;                               \
+      \                                              \
+      \  for (var b = 1; a < 10000; b = temp + b) {  \
+      \    temp = a;                                 \
+      \    a = b;                                    \
+      \  }                                           \
+      \                                              \
+      \  a;                                          \
+    \")
+    === Right (Obj.Number 10946)
   ]

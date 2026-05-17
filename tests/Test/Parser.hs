@@ -17,7 +17,7 @@ testParser =
   , testParseBlock
   , testParseIf
   , testParseWhile
-  , testParseProgram
+  , testParseFor
   ]
 
 testParseAtom :: TestTree
@@ -105,7 +105,7 @@ testParseExpr = testCollection "parseExpr"
   ]
 
 testParseIf :: TestTree
-testParseIf = testCollection "parseIf"
+testParseIf = testCollection "if"
   [
     parse "if (true) print 1;"
     === Right [
@@ -133,7 +133,7 @@ testParseIf = testCollection "parseIf"
   ]
 
 testParseBlock :: TestTree
-testParseBlock = testCollection "parseBlock"
+testParseBlock = testCollection "block"
   [
     parse "{}"
     === Right [
@@ -177,7 +177,7 @@ testParseBlock = testCollection "parseBlock"
   ]
 
 testParseWhile :: TestTree
-testParseWhile = testCollection "parseWhile"
+testParseWhile = testCollection "while"
   [
     parse "while (true) {}" === Right [
       While (Bool True) (Block [])
@@ -205,14 +205,24 @@ testParseWhile = testCollection "parseWhile"
     ]
   ]
 
-testParseProgram :: TestTree
-testParseProgram = testCollection "parseProgram"
+testParseFor :: TestTree
+testParseFor = testCollection "for"
   [
-    parse "1 + 2; nil;"
-    === Right [
-      Stmt (
-        Binary Op.ADD (Num 1.0) (Num 2.0)
-      )
-    , Stmt Nil
+    parse "for (;;) {}" === Right [
+      Block [
+        While (Bool True) (Block [Block []])
+      ]
     ]
+
+  , parse "for (var i = 0; i < len; i = i + 1) print i;" === Right [
+    Block [
+      DeclVar "i" (Num 0)
+    , While
+        (Binary Op.LT (Var "i") (Var "len"))
+        (Block [
+          Print (Var "i")
+        , AsgnVar "i" (Binary Op.ADD (Var "i") (Num 1))
+        ])
+    ]
+  ]
   ]

@@ -49,7 +49,7 @@ instance Show Node where
   show (Binary op l r)  = "(" ++ show l ++ show op ++ show r ++ ")"
   show (Unary op node)  = show op ++ show node
 
-  show (Var ident) = "'" ++ show ident ++ "'"
+  show (Var ident) = "'" ++ ident ++ "'"
   show (Str str)   = "\"" ++ str ++ "\""
   show (Num n)     = show n
   show (Bool b)    = show b
