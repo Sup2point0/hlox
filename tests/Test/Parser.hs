@@ -19,6 +19,7 @@ testParser =
   , testParseWhile
   , testParseFor
   , testParseCall
+  , testParseDeclFunc
   ]
 
 testParseAtom :: TestTree
@@ -229,7 +230,7 @@ testParseFor = testCollection "for"
   ]
 
 testParseCall :: TestTree
-testParseCall = testCollection "call"
+testParseCall = testCollection "Call"
   [
     parse "test();" === Right [
       Stmt $ Call (Var "test") []
@@ -253,5 +254,28 @@ testParseCall = testCollection "call"
           Call (Var "poly") [Num 1]
         ) [Num 2]
       ) [Num 3]
+    ]
+  ]
+
+testParseDeclFunc :: TestTree
+testParseDeclFunc = testCollection "DeclFunc"
+  [
+    parse "fun test() {}" === Right [
+      DeclFunc "test" [] (Block [])
+    ]
+
+  , parse "fun testing(x) { print x; }" === Right [
+      DeclFunc "testing" ["x"] (Block [
+        Print (Var "x")
+      ])
+    ]
+
+  , parse "fun tests(x, y, z) { print x; print y; print z; }"
+    === Right [
+      DeclFunc "tests" ["x", "y", "z"] (Block [
+        Print (Var "x")
+      , Print (Var "y")
+      , Print (Var "z")
+      ])
     ]
   ]

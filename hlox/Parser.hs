@@ -34,6 +34,7 @@ parseProgram tokens = do
 -- | Parse a top-level declaration, the highest level in the syntax tree.
 parseDecl :: Parser Ast.Node
 parseDecl (Tk.VAR:ts') = parseDeclVar ts'
+parseDecl (Tk.FUN:ts') = parseDeclFunc ts'
 parseDecl tokens = parseStmt tokens
 
 
@@ -48,13 +49,28 @@ parseDeclVar ((Tk.IDENT v):(Tk.EQ):ts) = do
 parseDeclVar tokens = Left (Err.UnexpectedInput tokens)
 
 
+-- | Parse `fun x() { ... }`
+parseDeclFunc :: Parser Ast.Node
+
+parseDeclFunc ((Tk.IDENT f):(Tk.LPAREN):ts) = do
+  (tokens', args) <- case ts of
+    (Tk.RPAREN:ts') -> Right (ts', [])
+    _               -> parseArgs ts
+  tokens'' <- expect Tk.LBRACE tokens'
+  (tokens''', body) <- parseBlock tokens''
+  let args' = map (\(Ast.Var ident) -> ident) args
+  let func = Ast.DeclFunc f args' (Ast.Block body)
+  return (tokens''', func)
+
+parseDeclFunc tokens = Left (Err.UnexpectedInput tokens)
+
+
 -- | Parse a statement.
 parseStmt :: Parser Ast.Node
 
 parseStmt (Tk.LBRACE:ts) = do
   (tokens', stmts) <- parseBlock ts
-  tokens'' <- expect Tk.RBRACE tokens'
-  return (tokens'', Ast.Block stmts)
+  return (tokens', Ast.Block stmts)
 
 parseStmt (Tk.PRINT:ts) = do
   (tokens', expr) <- parseExpr ts
@@ -130,7 +146,7 @@ parseStmt tokens = do
 
 -- | Parse `{ _ }`
 parseBlock :: Parser [Ast.Node]
-parseBlock tokens@(Tk.RBRACE:_) = return (tokens, [])
+parseBlock (Tk.RBRACE:ts) = return (ts, [])
 parseBlock tokens = do
   (tokens', stmt) <- parseDecl tokens
   (tokens'', stmts) <- parseBlock tokens'
@@ -239,16 +255,16 @@ parseCall tokens = do
 
 finishCall :: Ast.Node -> Parser Ast.Node
 
-finishCall callee (Tk.LPAREN:Tk.RPAREN:ts)
-  = finishCall (Ast.Call callee []) ts
-
 finishCall callee (Tk.LPAREN:ts) = do
-  (tokens', args) <- parseArgs ts
+  (tokens', args) <- case ts of
+    (Tk.RPAREN:ts') -> Right (ts', [])
+    _               -> parseArgs ts
   finishCall (Ast.Call callee args) tokens'
 
 finishCall callee tokens = Right (tokens, callee)
 
 
+-- | Parse `x, y, ..., z)`
 parseArgs :: Parser [Ast.Node]
 parseArgs tokens = do
   (tokens', arg) <- parseExpr tokens

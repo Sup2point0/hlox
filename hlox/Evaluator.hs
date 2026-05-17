@@ -52,6 +52,10 @@ eval (Ast.DeclVar ident node) env = do
   (val, env') <- eval node env
   return (val, Env.define ident val env')
 
+eval (Ast.DeclFunc ident params body) env = do
+  let func = Obj.Callable ident params body
+  return (Obj.Nil, Env.define ident func env)
+
 eval (Ast.Print node) env = do
   (node', env') <- eval node env
   return (trace ("hlox> " ++ show node') Obj.Nil, env')
@@ -83,6 +87,19 @@ eval (Ast.AsgnVar ident node) env = do
   (val, env') <- eval node env
   env'' <- Env.set ident val env'
   return (val, env'')
+
+eval (Ast.Call callee args) env = do
+    (callee', env') <- eval callee env
+    (args', env'') <- foldr go (Right ([], env')) args
+    call callee' args' env''
+  where
+    go :: Ast.Node
+       -> Either EvalError ([EvalObject], EvalEnv)
+       -> Either EvalError ([EvalObject], EvalEnv)
+    go _ (Left e) = Left e
+    go node (Right (vals, env)) = do
+      (val, env') <- eval node env
+      return (val:vals, env')
 
 eval (Ast.Binary Op.OR left right) env = do
   (left', env') <- eval left env
@@ -144,7 +161,7 @@ eval' node          = const  $ Left (Err.UnknownError (show node))
 
 
 evalBinaryEqOrd :: (forall t. (Eq t, Ord t) => t -> t -> Bool)
-                -> Node -> Node
+                -> Ast.Node -> Ast.Node
                 -> EvalEnv
                 -> Either EvalError EvalResult
 
@@ -161,7 +178,7 @@ evalBinaryEqOrd op left right env = do
 
 
 evalBinaryArithmetic :: (Float -> Float -> Float)
-                     -> Node -> Node
+                     -> Ast.Node -> Ast.Node
                      -> EvalEnv
                      -> Either EvalError EvalResult
 
@@ -174,3 +191,12 @@ evalBinaryArithmetic op left right env = do
     (Obj.Number _, r           ) -> Left (Err.TypeError "Number" (showType r))
     (l           , Obj.Number _) -> Left (Err.TypeError "Number" (showType l))
     (l           , r           ) -> Left (Err.MonoTypeError (showType l) (showType r))
+
+
+call :: EvalObject
+     -> [EvalObject]
+     -> EvalEnv
+     -> Either EvalError EvalResult
+call (Obj.Callable _ params body) args env = do
+  let env' = foldr (uncurry Env.define) env (zip params args)
+  eval body env'

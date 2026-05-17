@@ -12,6 +12,7 @@ data Node =
 
   -- declarations
   | DeclVar String Node
+  | DeclFunc String [String] Node
 
   -- statements
   | Stmt Node
@@ -36,8 +37,12 @@ data Node =
 
 
 instance Show Node where
-  show (Block nodes)        = " { " ++ (intercalate " " (map show nodes)) ++ " } "
-  show (DeclVar ident node) = "var " ++ show ident ++ " = " ++ show node ++ ";"
+  show (Block nodes) = " { " ++ (intercalate " " (map show nodes)) ++ " } "
+
+  show (DeclVar ident node)
+    = "var " ++ show ident ++ " = " ++ show node ++ ";"
+  show (DeclFunc ident params body)
+    = "fun " ++ (intercalate ", " (map show params)) ++ show body
 
   show (Stmt node)    = show node ++ ";"
   show (Print node)   = "print (" ++ show node ++ ")"

@@ -53,7 +53,7 @@ set ident val (Env (Just parent) vars) = do
   parent' <- set ident val parent
   return (Env (Just parent') vars)
 
-set ident val (Env Nothing vars)
+set ident _ (Env Nothing _)
   = Left (Err.UndefinedVariable ident)
 
 

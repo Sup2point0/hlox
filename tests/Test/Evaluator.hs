@@ -29,6 +29,7 @@ testEvaluator =
   , testScope
   , testIf
   , testLoop
+  , testFunctions
   ]
   
 testExpr :: TestTree
@@ -267,4 +268,18 @@ testLoop = testCollection "loop"
       \  a;                                          \
     \")
     === Right (Obj.Number 10946)
+  ]
+
+testFunctions :: TestTree
+testFunctions = testCollection "functions"
+  [
+    evalProgram (parse "\
+      \  fun inc(n) {    \
+      \      n = n + 1;  \
+      \      print(n);   \
+      \  }               \
+      \                  \
+      \  inc(0);         \
+    \")
+    === Right (Obj.Number 1)
   ]
