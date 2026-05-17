@@ -11,11 +11,9 @@ import Evaluator.Errors qualified as Err
 import Evaluator.Errors (EvalError)
 
 
-type Vars = Map String EvalObject
-
 data EvalEnv = Env {
     parent :: Maybe EvalEnv
-  , vars :: Vars
+  , vars :: Map String EvalObject
   }
 
 -- | A scoped environment that is guaranteed (contractually) to have a parent environment.

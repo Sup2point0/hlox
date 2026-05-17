@@ -1,5 +1,7 @@
 module Evaluator where
 
+import Data.Maybe qualified as Maybe
+
 import Debug.Trace (trace)
 
 import Evaluator.Objects qualified as Obj
@@ -55,6 +57,12 @@ eval (Ast.DeclVar ident node) env = do
 eval (Ast.DeclFunc ident params body) env = do
   let func = Obj.Callable ident params body
   return (Obj.Nil, Env.define ident func env)
+
+eval (Ast.Return mnode) env = do
+  (val, env') <- case mnode of
+    Just node -> eval node env
+    Nothing   -> Right (Obj.Nil, env)
+  Left (Err.Returning (val, env'))
 
 eval (Ast.Print node) env = do
   (node', env') <- eval node env
@@ -199,4 +207,6 @@ call :: EvalObject
      -> Either EvalError EvalResult
 call (Obj.Callable _ params body) args env = do
   let env' = foldr (uncurry Env.define) env (zip params args)
-  eval body env'
+  case eval body env' of
+    Left (Err.Returning result) -> return result
+    result                      -> result

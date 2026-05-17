@@ -1,6 +1,7 @@
 module Parser.Ast where
 
 import Data.List (intercalate)
+import Data.Maybe (Maybe)
 
 import Parser.Ops
 
@@ -16,6 +17,7 @@ data Node =
 
   -- statements
   | Stmt Node
+  | Return (Maybe Node)
   | Print Node
   | If Node Node
   | IfElse Node Node Node
@@ -44,11 +46,13 @@ instance Show Node where
   show (DeclFunc ident params body)
     = "fun " ++ (intercalate ", " (map show params)) ++ show body
 
-  show (Stmt node)    = show node ++ ";"
-  show (Print node)   = "print (" ++ show node ++ ")"
-  show (If c body)    = "if (" ++ show c ++ ") " ++ show body
-  show (IfElse c t f) = "if (" ++ show c ++ ") " ++ show t ++ " else " ++ show f
-  show (While c body) = "while (" ++ show c ++ ")" ++ show body
+  show (Stmt node)       = show node ++ ";"
+  show (Return (Just r)) = "return (" ++ show r ++ ")"
+  show (Return Nothing)  = "return"
+  show (Print node)      = "print (" ++ show node ++ ")"
+  show (If c body)       = "if (" ++ show c ++ ") " ++ show body
+  show (IfElse c t f)    = "if (" ++ show c ++ ") " ++ show t ++ " else " ++ show f
+  show (While c body)    = "while (" ++ show c ++ ")" ++ show body
 
   show (AsgnVar ident node) = show ident ++ " = " ++ show node ++ ";"
   show (Call callee args)   = show callee ++ "(" ++ (intercalate ", " (map show args)) ++ ")"

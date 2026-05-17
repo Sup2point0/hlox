@@ -11,7 +11,7 @@ data Error =
     LexErr   [LexError]
   | ParseErr ParseError
   | EvalErr  EvalError
-  deriving Eq
+  deriving (Eq)
 
 instance Show Error where
   show (LexErr errs)

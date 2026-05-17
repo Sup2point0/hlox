@@ -264,9 +264,9 @@ testParseDeclFunc = testCollection "DeclFunc"
       DeclFunc "test" [] (Block [])
     ]
 
-  , parse "fun testing(x) { print x; }" === Right [
+  , parse "fun testing(x) { return x; }" === Right [
       DeclFunc "testing" ["x"] (Block [
-        Print (Var "x")
+        Return (Just (Var "x"))
       ])
     ]
 

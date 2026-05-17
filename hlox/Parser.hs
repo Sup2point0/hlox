@@ -72,6 +72,12 @@ parseStmt (Tk.LBRACE:ts) = do
   (tokens', stmts) <- parseBlock ts
   return (tokens', Ast.Block stmts)
 
+parseStmt (Tk.RETURN:Tk.SEMICOLON:ts) = Right (ts, Ast.Return Nothing)
+parseStmt (Tk.RETURN:ts) = do
+  (tokens', expr) <- parseExpr ts
+  tokens'' <- expect Tk.SEMICOLON tokens'
+  return (tokens'', Ast.Return (Just expr))
+
 parseStmt (Tk.PRINT:ts) = do
   (tokens', expr) <- parseExpr ts
   tokens'' <- expect Tk.SEMICOLON tokens'

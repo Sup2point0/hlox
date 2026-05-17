@@ -276,7 +276,7 @@ testFunctions = testCollection "functions"
     evalProgram (parse "\
       \  fun inc(n) {    \
       \      n = n + 1;  \
-      \      print(n);   \
+      \      return n;   \
       \  }               \
       \                  \
       \  inc(0);         \
