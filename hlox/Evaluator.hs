@@ -37,8 +37,8 @@ eval :: Node -> Evaluator EvalEnv
 
 eval (Ast.Block nodes) = do
     env <- get
-    (Env.ScopedEnv env') <- lift $ execStateT (go nodes) (Env.from env)
-    put env'
+    env' <- lift $ execStateT (go nodes) (Env.from env)
+    put (Env.close env')
     return Obj.Nil
   where
     go :: [Ast.Node] -> Evaluator ScopedEnv
@@ -105,6 +105,7 @@ eval (Ast.Call callee args) = do
     call callee' args'
   where
     go :: [Ast.Node] -> StateT EvalEnv (Either EvalError) [EvalObject]
+    go [] = return []
     go (node:nodes) = do
       val <- eval node
       vals <- go nodes
