@@ -52,7 +52,7 @@ instance Show Node where
   show (Return Nothing)  = "return"
   show (Print node)      = "print (" ++ show node ++ ")"
   show (If c body)       = "if (" ++ show c ++ ") " ++ show body
-  show (IfElse c t f)    = "if (" ++ show c ++ ") " ++ show t ++ " else " ++ show f
+  show (IfElse c t e)    = "if (" ++ show c ++ ") " ++ show t ++ " else " ++ show e
   show (While c body)    = "while (" ++ show c ++ ")" ++ show body
 
   show (AsgnVar ident node) = show ident ++ " = " ++ show node ++ ";"
@@ -66,10 +66,3 @@ instance Show Node where
   show (Num n)     = show n
   show (Bool b)    = show b
   show  Nil        = "Nil"
-
-
-child :: Node -> Maybe Node
-child (DeclVar _ node) = Just node
-child (Stmt node)      = Just node
-child (Print node)     = Just node
-child _                = Nothing

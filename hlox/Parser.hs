@@ -36,10 +36,7 @@ parseProgram = do
   tokens <- get
   case tokens of
     [] -> return []
-    _  -> do
-      stmt <- parseDecl
-      stmts <- parseProgram
-      return (stmt:stmts)
+    _  -> (:) <$> parseDecl <*> parseProgram
 
 
 -- | Parse a top-level declaration, the highest level in the syntax tree.
@@ -47,14 +44,15 @@ parseDecl :: Parser Ast.Node
 parseDecl = do
   tokens <- get
   case tokens of
-    (Tk.VAR:ts) -> put ts >> parseDeclVar
-    (Tk.FUN:ts) -> put ts >> parseDeclFunc
+    (Tk.VAR:_) -> parseDeclVar
+    (Tk.FUN:_) -> parseDeclFunc
     _ -> parseStmt
 
 
 -- | Parse `var x = _`
 parseDeclVar :: Parser Ast.Node
 parseDeclVar = do
+  expect Tk.VAR
   tokens <- get
   case tokens of
     ((Tk.IDENT v):(Tk.EQ):ts) -> do
@@ -68,16 +66,18 @@ parseDeclVar = do
 -- | Parse `fun x() { ... }`
 parseDeclFunc :: Parser Ast.Node
 parseDeclFunc = do
+  expect Tk.FUN
   tokens <- get
   case tokens of
     ((Tk.IDENT f):Tk.LPAREN:ts) -> do
-        put ts
         args <- case ts of
           (Tk.RPAREN:ts') -> put ts' >> return []
-          _               -> parseArgs
+          _               -> put ts  >> parseArgs
         expect Tk.LBRACE
+
         body <- parseBlock
         let args' = map (\(Ast.Var ident) -> ident) args
+
         return (Ast.DeclFunc f args' (Ast.Block body))
     
     _ -> get >>= lift . Left . Err.UnexpectedInput
@@ -140,8 +140,7 @@ parseStmt = do
         tokens' <- get
         init <- case tokens' of
           (Tk.SEMICOLON:ts') -> put ts' >> return Nothing
-          _                  -> expect Tk.VAR >> parseDeclVar >>= return . Just
-          -- TODO move expect VAR to parseDeclVar
+          _                  -> parseDeclVar >>= return . Just
 
         tokens'' <- get
         cond <- case tokens'' of
