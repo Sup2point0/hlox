@@ -282,4 +282,27 @@ testFunctions = testCollection "functions"
       \  inc(0);         \
     \")
     === Right (Obj.Number 1)
+
+  , evalProgram (parse "\
+      \  fun inc(n) {    \
+      \      n = n + 1;  \
+      \      return n;   \
+      \  }               \
+      \                  \
+      \  inc(0);         \
+    \")
+    === Right (Obj.Number 1)
+
+  , evalProgram (parse "\
+      \  fun count(n) {             \
+      \    while (n < 100) {        \
+      \      if (n == 3) return n;  \
+      \      print n;               \
+      \      n = n + 1;             \
+      \    }                        \
+      \  }                          \
+      \                             \
+      \  count(1);                  \
+    \")
+    === Right (Obj.Number 3)
   ]

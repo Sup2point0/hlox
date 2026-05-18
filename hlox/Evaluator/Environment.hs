@@ -58,3 +58,7 @@ set ident _ (Env Nothing _)
 -- | Extract the parent environment of a scoped environment.
 close :: ScopedEnv -> EvalEnv
 close (ScopedEnv (Env parent _)) = Maybe.fromJust parent
+
+global :: EvalEnv -> EvalEnv
+global env@(Env Nothing _)   = env
+global (Env (Just parent) _) = global parent

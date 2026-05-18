@@ -59,10 +59,10 @@ eval (Ast.DeclFunc ident params body) env = do
   return (Obj.Nil, Env.define ident func env)
 
 eval (Ast.Return mnode) env = do
-  (val, env') <- case mnode of
+  (val, _) <- case mnode of
     Just node -> eval node env
     Nothing   -> Right (Obj.Nil, env)
-  Left (Err.Returning (val, env'))
+  Left (Err.Returning val)
 
 eval (Ast.Print node) env = do
   (node', env') <- eval node env
@@ -206,7 +206,7 @@ call :: EvalObject
      -> EvalEnv
      -> Either EvalError EvalResult
 call (Obj.Callable _ params body) args env = do
-  let env' = foldr (uncurry Env.define) env (zip params args)
+  let env' = foldr (uncurry Env.define) (Env.global env) (zip params args)
   case eval body env' of
-    Left (Err.Returning result) -> return result
-    result                      -> result
+    Left (Err.Returning res) -> return (res, env)
+    result                   -> result
