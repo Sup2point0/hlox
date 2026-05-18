@@ -7,13 +7,14 @@ import Parser.Errors (ParseError)
 import Evaluator.Errors (EvalError)
 
 
-data Error =
+data HloxError =
     LexErr   [LexError]
   | ParseErr ParseError
   | EvalErr  EvalError
   deriving (Eq)
 
-instance Show Error where
+
+instance Show HloxError where
   show (LexErr errs)
     = show (length errs)
       ++ " errors during lexing:\n"

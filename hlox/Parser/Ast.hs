@@ -8,6 +8,7 @@ import Parser.Ops
 
 type Program = [Node]
 
+
 data Node =
     Block [Node]
 

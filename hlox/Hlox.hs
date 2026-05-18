@@ -1,36 +1,22 @@
 module Hlox where
 
+import Data.Bifunctor qualified as Bifunctor
 import Data.Either qualified as Either
 
 import Errors
 import Lexer qualified
-import Lexer.Tokens (LexToken)
 import Parser qualified
 import Parser.Ast (Program)
-import Parser.Errors (ParseError(UnparsedInput))
 import Evaluator qualified
 import Evaluator.Objects (EvalObject)
 
 
 -- | Try to parse the provided Lox source code into the AST of a program.
-parse :: String -> Either Error Program
-parse input = do
-  tokens <- tryLex input
-  ast <- tryParse tokens
+parse :: String -> Either HloxError Program
+parse src = do
+  tokens <- Bifunctor.first LexErr (Lexer.tokenise src)
+  ast <- Bifunctor.first ParseErr (Parser.tryParse tokens)
   return ast
-  where
-    tryLex :: String -> Either Error [LexToken]
-    tryLex src
-      = case Lexer.tokenise src of
-          Left err     -> Left (LexErr err)
-          Right tokens -> Right tokens
-
-    tryParse :: [LexToken] -> Either Error Program
-    tryParse tokens
-      = case Parser.parseProgram tokens of
-          Left err        -> Left (ParseErr err)
-          Right ([], ast) -> Right ast
-          Right (res, _)  -> Left (ParseErr (UnparsedInput res))
 
 -- | Try to execute and evaluate the provided Lox source code, crashing if the program throws an error.
 exec :: String -> EvalObject
