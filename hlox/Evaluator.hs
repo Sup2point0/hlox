@@ -25,8 +25,9 @@ type Evaluator env = StateT env (Either EvalError) EvalObject
 evalProgram :: Program -> Either EvalError EvalObject
 evalProgram ast = evalStateT (go ast) Env.new
   where
+    -- NOTE: `[]` is not base case, but rather an exception!
+    -- Programs should return their last node, only an empty program returns `Nil`.
     go :: Program -> Evaluator EvalEnv
-    
     go []           = lift $ Right (Obj.Nil)
     go [node]       = eval node
     go (node:nodes) = eval node >> go nodes
@@ -38,16 +39,17 @@ eval :: Node -> Evaluator EvalEnv
 eval (Ast.Block nodes) = do
     env <- get
     env' <- lift $ execStateT (go nodes) (Env.from env)
-    put (Env.close env')
+    put $ Env.close env'
     return Obj.Nil
   where
     go :: [Ast.Node] -> Evaluator ScopedEnv
     go [] = return Obj.Nil
     go (stmt:stmts) = do
-      (Env.ScopedEnv env) <- get
+      Env.ScopedEnv env <- get
       env' <- lift $ execStateT (eval stmt) env
       put $ Env.ScopedEnv env'
       go stmts 
+
 
 eval (Ast.DeclVar ident node) = do
   val <- eval node
@@ -58,6 +60,9 @@ eval (Ast.DeclFunc ident params body) = do
   let func = Obj.Callable ident params body
   modify $ Env.define ident func
   return Obj.Nil
+
+
+eval (Ast.Stmt node) = eval node
 
 eval (Ast.Return mnode) = do
   val <- case mnode of
@@ -77,11 +82,11 @@ eval (Ast.If cond body) = do
     Obj.Boolean False -> return Obj.Nil
     ex                -> lift $ Left (Err.TypeError "boolean" (showType ex))
 
-eval (Ast.IfElse cond true false) = do
+eval (Ast.IfElse cond then' else') = do
   cond' <- eval cond
   case cond' of
-    Obj.Boolean True  -> eval true
-    Obj.Boolean False -> eval false
+    Obj.Boolean True  -> eval then'
+    Obj.Boolean False -> eval else'
     ex                -> lift $ Left (Err.TypeError "boolean" (showType ex))
 
 eval node@(Ast.While cond body) = do
@@ -90,6 +95,7 @@ eval node@(Ast.While cond body) = do
     Obj.Boolean True  -> eval body >> eval node
     Obj.Boolean False -> return Obj.Nil
     ex                -> lift $ Left (Err.TypeError "boolean" (showType ex))
+
 
 eval (Ast.AsgnVar ident node) = do
   val <- eval node
@@ -111,6 +117,7 @@ eval (Ast.Call callee args) = do
       vals <- go nodes
       return (val:vals)
 
+
 eval (Ast.Binary Op.OR left right) = do
   left' <- eval left
   case left' of
@@ -128,24 +135,22 @@ eval (Ast.Binary Op.AND left right) = do
     Obj.Boolean b1 -> do
       right' <- eval right
       case right' of
-        Obj.Boolean b2 -> return (Obj.Boolean (b1 && b2))
-        ex             -> lift $ Left (Err.TypeError "boolean" (showType ex))
+        Obj.Boolean b2 -> return $ Obj.Boolean (b1 && b2)
+        ex             -> lift   $ Left (Err.TypeError "boolean" (showType ex))
     ex -> lift $ Left (Err.TypeError "boolean" (showType ex))
 
 eval (Ast.Unary Op.NEGATE node) = do
   node' <- eval node
   case node' of
-    Obj.Number n -> return (Obj.Number (-n))
-    ex           -> lift $ Left (Err.TypeError "number" (showType ex))
+    Obj.Number n -> return $ Obj.Number (-n)
+    ex           -> lift   $ Left (Err.TypeError "number" (showType ex))
+
 
 eval (Ast.Var ident) = do
   env <- get
   case Env.get ident env of
     Just val -> return val
     Nothing  -> lift $ Left (Err.UndefinedVariable ident)
-
--- TODO reorder
-eval (Ast.Stmt node) = eval node
 
 eval (Ast.Binary Op.EQ   l r) = evalBinaryEqOrd (==) l r
 eval (Ast.Binary Op.NEQ  l r) = evalBinaryEqOrd (/=) l r
@@ -197,9 +202,7 @@ evalBinaryArithmetic op left right = do
     (l           , r           ) -> lift   $ Left (Err.MonoTypeError (showType l) (showType r))
 
 
-call :: EvalObject
-     -> [EvalObject]
-     -> Evaluator EvalEnv
+call :: EvalObject -> [EvalObject] -> Evaluator EvalEnv
 call (Obj.Callable _ params body) args = do
   env <- get
   let env' = foldr (uncurry Env.define) (Env.global env) (zip params args)
