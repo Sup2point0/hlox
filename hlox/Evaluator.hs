@@ -1,7 +1,5 @@
 module Evaluator where
 
-import Data.Maybe qualified as Maybe
-
 import Control.Monad.State
 
 import Debug.Trace (trace)
@@ -18,7 +16,8 @@ import Parser.Ast (Program, Node)
 import Parser.Ops qualified as Op
 
   
-type Evaluator env = StateT env (Either EvalError) EvalObject
+type EvaluatorT env res = StateT env (Either EvalError) res
+type Evaluator = EvaluatorT EvalEnv EvalObject
 
 
 -- | Evaluate a Lox program, given its AST.
@@ -27,14 +26,14 @@ evalProgram ast = evalStateT (go ast) Env.new
   where
     -- NOTE: `[]` is not base case, but rather an exception!
     -- Programs should return their last node, only an empty program returns `Nil`.
-    go :: Program -> Evaluator EvalEnv
+    go :: Program -> Evaluator
     go []           = lift $ Right (Obj.Nil)
     go [node]       = eval node
     go (node:nodes) = eval node >> go nodes
 
 
 -- | Evaluate a node in the AST.
-eval :: Node -> Evaluator EvalEnv
+eval :: Node -> Evaluator
 
 eval (Ast.Block nodes) = do
     env <- get
@@ -42,7 +41,7 @@ eval (Ast.Block nodes) = do
     put $ Env.close env'
     return Obj.Nil
   where
-    go :: [Ast.Node] -> Evaluator ScopedEnv
+    go :: [Ast.Node] -> EvaluatorT ScopedEnv EvalObject
     go [] = return Obj.Nil
     go (stmt:stmts) = do
       Env.ScopedEnv env <- get
@@ -72,8 +71,8 @@ eval (Ast.Return mnode) = do
 
 eval (Ast.Print node) = do
   node' <- eval node
-  let print = trace ("hlox> " ++ show node')
-  return $ print Obj.Nil
+  let traced = trace ("hlox> " ++ show node')
+  return $ traced Obj.Nil
 
 eval (Ast.If cond body) = do
   cond' <- eval cond
@@ -105,17 +104,9 @@ eval (Ast.AsgnVar ident node) = do
   return val
 
 eval (Ast.Call callee args) = do
-    callee' <- eval callee
-    args' <- go args
-    env <- get
-    call callee' args'
-  where
-    go :: [Ast.Node] -> StateT EvalEnv (Either EvalError) [EvalObject]
-    go [] = return []
-    go (node:nodes) = do
-      val <- eval node
-      vals <- go nodes
-      return (val:vals)
+  callee' <- eval callee
+  args' <- traverse eval args
+  call callee' args'
 
 
 eval (Ast.Binary Op.OR left right) = do
@@ -125,7 +116,7 @@ eval (Ast.Binary Op.OR left right) = do
     Obj.Boolean False -> do
       right' <- eval right
       case right' of
-        Obj.Boolean b -> return right'
+        Obj.Boolean _ -> return right'
         ex            -> lift $ Left (Err.TypeError "boolean" (showType ex))
     ex -> lift $ Left (Err.TypeError "boolean" (showType ex))
 
@@ -168,12 +159,14 @@ eval (Ast.Str str) = return $ Obj.String str
 eval (Ast.Num n)   = return $ Obj.Number n
 eval (Ast.Bool b)  = return $ Obj.Boolean b
 eval (Ast.Nil)     = return $ Obj.Nil
-eval node          = lift   $ Left (Err.UnknownError (show node))
+
+-- NOTE: Yeah Haskell can prove this is unreachable, just leaving it so we get an error if we add a new AST node and haven't implemented its evaluator yet
+eval node = lift $ Left (Err.UnknownError (show node))
 
 
 evalBinaryEqOrd :: (forall t. (Eq t, Ord t) => t -> t -> Bool)
                 -> Ast.Node -> Ast.Node
-                -> Evaluator EvalEnv
+                -> Evaluator
 
 evalBinaryEqOrd op left right = do
   left'  <- eval left
@@ -189,7 +182,7 @@ evalBinaryEqOrd op left right = do
 
 evalBinaryArithmetic :: (Float -> Float -> Float)
                      -> Ast.Node -> Ast.Node
-                     -> Evaluator EvalEnv
+                     -> Evaluator
 
 evalBinaryArithmetic op left right = do
   left'  <- eval left
@@ -202,10 +195,11 @@ evalBinaryArithmetic op left right = do
     (l           , r           ) -> lift   $ Left (Err.MonoTypeError (showType l) (showType r))
 
 
-call :: EvalObject -> [EvalObject] -> Evaluator EvalEnv
+call :: EvalObject -> [EvalObject] -> Evaluator
 call (Obj.Callable _ params body) args = do
   env <- get
   let env' = foldr (uncurry Env.define) (Env.global env) (zip params args)
   case evalStateT (eval body) env' of
     Left (Err.Returning r) -> return r
     result                 -> lift result
+call ex _ = lift $ Left (Err.TypeError "Callable" (showType ex))
