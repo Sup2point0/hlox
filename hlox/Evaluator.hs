@@ -68,7 +68,8 @@ eval (Ast.Return mnode) = do
   val <- case mnode of
     Just node -> eval node
     Nothing   -> lift $ Right Obj.Nil
-  lift $ Left (Err.Returning val)
+  env <- get
+  lift $ Left (Err.Return (val, env))
 
 eval (Ast.Print node) = do
   node' <- eval node
@@ -130,6 +131,7 @@ eval (Ast.Binary Op.AND left right) = do
         Obj.Boolean b2 -> return $ Obj.Boolean (b1 && b2)
         ex             -> lift   $ Left (Err.TypeError "boolean" (showType ex))
     ex -> lift $ Left (Err.TypeError "boolean" (showType ex))
+
 
 eval (Ast.Unary Op.NEGATE node) = do
   node' <- eval node
@@ -197,9 +199,20 @@ evalBinaryArithmetic op left right = do
 
 
 call :: EvalObject -> [EvalObject] -> Evaluator
-call (Obj.Callable _ params body env) args = do
-  let env' = foldr (uncurry Env.define) env (zip params args)
-  case evalStateT (eval body) env' of
-    Left (Err.Returning r) -> return r
-    result                 -> lift result
+
+call (Obj.Callable ident params body cenv) args = do
+  let cenv' = foldr (uncurry Env.define) cenv (zip params args)
+  case runStateT (eval body) cenv' of
+    Left (Err.Return (r, cenv'')) -> out cenv'' r
+    Right (r, cenv'')             -> out cenv'' r
+    Left err                      -> lift $ Left err
+  where
+    out :: EvalEnv -> EvalObject -> Evaluator
+    out cenv result = do
+      let callee' = Obj.Callable ident params body cenv
+      env <- get
+      env' <- lift $ Env.set ident callee' env
+      put env'
+      return result
+
 call ex _ = lift $ Left (Err.TypeError "Callable" (showType ex))

@@ -307,11 +307,63 @@ testFunctions = testCollection "functions"
     === Right (Obj.Number 3)
 
   , evalProgram (parse "\
+      \  fun outer(x) {       \
+      \    fun inner(x) {     \
+      \      fun inc(x) {     \
+      \        return x + 1;  \
+      \      }                \
+      \      return inc(x);   \
+      \    }                  \
+      \    return inner(x);   \
+      \  }                    \
+      \                       \
+      \  outer(0);            \
+    \")
+    === Right (Obj.Number 1)
+
+  , evalProgram (parse "\
+      \  fun inc(n) { return n+1; }  \
+      \  fun dub(n) { return 2*n; }  \
+      \                              \
+      \  inc(dub(7));                \
+    \")
+    === Right (Obj.Number 15)
+
+  , evalProgram (parse "\
+      \  fun make_1() {       \
+      \    fun out() {        \
+      \      return 1;        \
+      \    }                  \
+      \                       \
+      \    return out;        \
+      \  }                    \
+      \                       \
+      \  make_1()();          \
+      \  one();               \
+    \")
+    === Right (Obj.Number 1)
+
+  , evalProgram (parse "\
+      \  fun make_1() {       \
+      \    fun out() {        \
+      \      return 1;        \
+      \    }                  \
+      \                       \
+      \    return out;        \
+      \  }                    \
+      \                       \
+      \  var one = make_1();  \
+      \  one();               \
+    \")
+    === Right (Obj.Number 1)
+
+  , evalProgram (parse "\
       \  fun makeCounter() {           \
       \    var i = 0;                  \
+      \                                \
       \    fun count() {               \
       \      i = i + 1;                \
-      \      print i;                  \
+      \      return i;                 \
       \    }                           \
       \                                \
       \    return count;               \

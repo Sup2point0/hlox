@@ -38,7 +38,7 @@ define :: String -> EvalObject -> EvalEnv -> EvalEnv
 define ident val (Env parent vars)
   = Env parent (Map.insert ident val vars)
 
--- | Set the value of `ident` to `val` in the environment, potentially in a parent environment.
+-- | Set the value of `ident` to `val` in the environment, potentially in a parent environment. Errors if `ident` is not defined in any environment.
 set :: String -> EvalObject -> EvalEnv -> Either EvalError (EvalEnv)
 
 set ident val (Env parent vars)

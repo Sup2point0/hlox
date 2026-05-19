@@ -5,18 +5,6 @@ module Evaluator.Objects (
 
 import Evaluator.Types (EvalObject(..))
 
-import Parser.Ast qualified as Ast
-
-
-instance Show EvalObject where
-  show (Nil)        = "nil"
-  show (Boolean b)  = show b
-  show (Number n)   = show n
-  show (String str) = "\"" ++ str ++ "\""
-
-  show (Callable ident _ _ _) = "<fun '" ++ ident ++ "'>"
-  show (Callable{})         = "<invalid fun>"
-
 
 showType :: EvalObject -> String
 showType (Boolean _)  = "Boolean"
