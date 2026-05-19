@@ -12,3 +12,8 @@ showType (Number _)   = "Number"
 showType (String _)   = "String"
 showType (Callable{}) = "Callable"
 showType (Nil)        = "Nil"
+
+
+anonymiseCallable :: EvalObject -> EvalObject
+anonymiseCallable (Callable _ params body cenv) = Callable "" params body cenv
+anonymiseCallable obj = obj

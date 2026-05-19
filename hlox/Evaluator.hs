@@ -1,5 +1,6 @@
 module Evaluator where
 
+import Control.Monad (when)
 import Control.Monad.State
 
 import Debug.Trace (trace)
@@ -52,14 +53,18 @@ eval (Ast.Block nodes) = do
 
 eval (Ast.DeclVar ident node) = do
   val <- eval node
-  modify $ Env.define ident val
+  val' <- case val of
+    Obj.Callable _ params body cenv -> return $ Obj.Callable ident params body cenv
+    _ -> return val
+  
+  modify $ Env.define ident val'
   return val
 
 eval (Ast.DeclFunc ident params body) = do
   env <- get
   let func = Obj.Callable ident params body env
   modify $ Env.define ident func
-  return Obj.Nil
+  return $ trace (show env) Obj.Nil
 
 
 eval (Ast.Stmt node) = eval node
@@ -100,8 +105,12 @@ eval node@(Ast.While cond body) = do
 
 eval (Ast.AsgnVar ident node) = do
   val <- eval node
+  val' <- case val of
+    Obj.Callable _ params body cenv -> return $ Obj.Callable ident params body cenv
+    _ -> return val
+  
   env <- get
-  env' <- lift $ Env.set ident val env
+  env' <- lift $ Env.set ident val' env
   put env'
   return val
 
@@ -144,7 +153,7 @@ eval (Ast.Var ident) = do
   env <- get
   case Env.get ident env of
     Just val -> return val
-    Nothing  -> lift $ Left (Err.UndefinedVariable ident)
+    Nothing  -> lift $ Left (Err.UndefinedVariable ident env)
 
 eval (Ast.Binary Op.EQ   l r) = evalBinaryEqOrd (==) l r
 eval (Ast.Binary Op.NEQ  l r) = evalBinaryEqOrd (/=) l r
@@ -203,16 +212,17 @@ call :: EvalObject -> [EvalObject] -> Evaluator
 call (Obj.Callable ident params body cenv) args = do
   let cenv' = foldr (uncurry Env.define) cenv (zip params args)
   case runStateT (eval body) cenv' of
-    Left (Err.Return (r, cenv'')) -> out cenv'' r
-    Right (r, cenv'')             -> out cenv'' r
+    Left (Err.Return (r, cenv'')) -> out cenv'' (Obj.anonymiseCallable r)
+    Right (r,            cenv'')  -> out cenv'' (Obj.anonymiseCallable r)
     Left err                      -> lift $ Left err
   where
     out :: EvalEnv -> EvalObject -> Evaluator
     out cenv result = do
       let callee' = Obj.Callable ident params body cenv
-      env <- get
-      env' <- lift $ Env.set ident callee' env
-      put env'
+      when (ident /= "") $ do
+        env <- get
+        env' <- lift $ Env.set ident callee' env
+        put env'
       return result
 
 call ex _ = lift $ Left (Err.TypeError "Callable" (showType ex))

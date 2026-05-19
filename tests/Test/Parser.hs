@@ -278,4 +278,24 @@ testParseDeclFunc = testCollection "DeclFunc"
       , Print (Var "z")
       ])
     ]
+
+  , parse "\
+      \  fun outer(x) {    \
+      \    fun inner(x) {  \
+      \      return x;     \
+      \    }               \
+      \    return inner;   \
+      \  }                 \
+    \"
+    === Right [
+      DeclFunc "outer" ["x"]
+      (Block [
+        (DeclFunc "inner" ["x"]
+          (Block [
+            Return (Just (Var "x"))
+          ])
+        )
+      , Return (Just (Var "inner"))
+      ])
+    ]
   ]

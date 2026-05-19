@@ -10,6 +10,7 @@ import Hlox qualified
 import Parser.Ast (Program)
 import Evaluator
 import Evaluator.Objects qualified as Obj
+import Evaluator.Environment qualified as Env
 import Evaluator.Errors qualified as Err
 
 
@@ -30,6 +31,7 @@ testEvaluator =
   , testIf
   , testLoop
   , testFunctions
+  , testClosures
   ]
   
 testExpr :: TestTree
@@ -117,7 +119,7 @@ testStateErrors :: TestTree
 testStateErrors = testCollection "state errors"
   [
     evalProgram (parse "var x = 1; print x; y;")
-    === Left (Err.UndefinedVariable "y")
+    === Left (Err.UndefinedVariable "y" Env.new)
   ]
 
 testScope :: TestTree
@@ -328,8 +330,12 @@ testFunctions = testCollection "functions"
       \  inc(dub(7));                \
     \")
     === Right (Obj.Number 15)
+  ]
 
-  , evalProgram (parse "\
+testClosures :: TestTree
+testClosures = testCollection "closures"
+  [
+    evalProgram (parse "\
       \  fun make_1() {       \
       \    fun out() {        \
       \      return 1;        \
@@ -339,7 +345,6 @@ testFunctions = testCollection "functions"
       \  }                    \
       \                       \
       \  make_1()();          \
-      \  one();               \
     \")
     === Right (Obj.Number 1)
 

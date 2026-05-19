@@ -45,12 +45,14 @@ set ident val (Env parent vars)
   | ident `Map.member` vars
   = Right (Env parent (Map.insert ident val vars))
 
-set ident val (Env (Just parent) vars) = do
-  parent' <- set ident val parent
-  return (Env (Just parent') vars)
+set ident val (Env (Just parent) vars)
+  = case set ident val parent of
+      Right p                          -> Right (Env (Just p) vars)
+      Left (Err.UndefinedVariable _ p) -> Left (Err.UndefinedVariable ident (Env (Just p) vars))
+      Left err                         -> Left err
 
-set ident _ (Env Nothing _)
-  = Left (Err.UndefinedVariable ident)
+set ident _ env@(Env Nothing _)
+  = Left (Err.UndefinedVariable ident env)
 
 
 -- | Extract the parent environment of a scoped environment.
