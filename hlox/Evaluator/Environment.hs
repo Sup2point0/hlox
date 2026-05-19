@@ -1,20 +1,18 @@
-module Evaluator.Environment where
+module Evaluator.Environment (
+    module Evaluator.Environment,
+    EvalEnv(..),
+  ) where
+
+import Evaluator.Types (EvalEnv(..), EvalObject)
 
 import Data.Map qualified as Map
-import Data.Map (Map)
 import Data.Maybe qualified as Maybe
 import Control.Applicative ((<|>))
 import Control.Monad qualified as Monad
 
-import Evaluator.Objects (EvalObject)
 import Evaluator.Errors qualified as Err
 import Evaluator.Errors (EvalError)
 
-
-data EvalEnv = Env {
-    parent :: Maybe EvalEnv
-  , vars :: Map String EvalObject
-  }
 
 -- | A scoped environment that is guaranteed (contractually) to have a parent environment.
 newtype ScopedEnv = ScopedEnv EvalEnv
@@ -41,7 +39,7 @@ define ident val (Env parent vars)
   = Env parent (Map.insert ident val vars)
 
 -- | Set the value of `ident` to `val` in the environment, potentially in a parent environment.
-set :: String -> EvalObject -> EvalEnv -> Either EvalError EvalEnv
+set :: String -> EvalObject -> EvalEnv -> Either EvalError (EvalEnv)
 
 set ident val (Env parent vars)
   | ident `Map.member` vars

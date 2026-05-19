@@ -1,16 +1,11 @@
-module Evaluator.Objects where
+module Evaluator.Objects (
+    module Evaluator.Objects,
+    EvalObject(..)
+  ) where
+
+import Evaluator.Types (EvalObject(..))
 
 import Parser.Ast qualified as Ast
-
-
-data EvalObject =
-    Nil
-  | Boolean Bool
-  | Number  Float
-  | String  String
-
-  | Callable String [String] Ast.Node
-  deriving (Eq)
 
 
 instance Show EvalObject where
@@ -19,7 +14,7 @@ instance Show EvalObject where
   show (Number n)   = show n
   show (String str) = "\"" ++ str ++ "\""
 
-  show (Callable ident _ _) = "<fun '" ++ ident ++ "'>"
+  show (Callable ident _ _ _) = "<fun '" ++ ident ++ "'>"
   show (Callable{})         = "<invalid fun>"
 
 

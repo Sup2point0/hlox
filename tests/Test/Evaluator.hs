@@ -305,4 +305,21 @@ testFunctions = testCollection "functions"
       \  count(1);                  \
     \")
     === Right (Obj.Number 3)
+
+  , evalProgram (parse "\
+      \  fun makeCounter() {           \
+      \    var i = 0;                  \
+      \    fun count() {               \
+      \      i = i + 1;                \
+      \      print i;                  \
+      \    }                           \
+      \                                \
+      \    return count;               \
+      \  }                             \
+      \                                \
+      \  var counter = makeCounter();  \
+      \  counter();                    \
+      \  counter();                    \
+    \")
+    === Right (Obj.Number 2)
   ]

@@ -7,7 +7,7 @@ import Debug.Trace (trace)
 import Evaluator.Objects qualified as Obj
 import Evaluator.Objects (EvalObject, showType)
 import Evaluator.Environment qualified as Env
-import Evaluator.Environment (EvalEnv, ScopedEnv)
+import Evaluator.Environment (EvalEnv, ScopedEnv(..))
 import Evaluator.Errors qualified as Err
 import Evaluator.Errors (EvalError)
 
@@ -15,7 +15,7 @@ import Parser.Ast qualified as Ast
 import Parser.Ast (Program, Node)
 import Parser.Ops qualified as Op
 
-  
+
 type EvaluatorT env res = StateT env (Either EvalError) res
 type Evaluator = EvaluatorT EvalEnv EvalObject
 
@@ -44,9 +44,9 @@ eval (Ast.Block nodes) = do
     go :: [Ast.Node] -> EvaluatorT ScopedEnv EvalObject
     go [] = return Obj.Nil
     go (stmt:stmts) = do
-      Env.ScopedEnv env <- get
+      ScopedEnv env <- get
       env' <- lift $ execStateT (eval stmt) env
-      put $ Env.ScopedEnv env'
+      put $ ScopedEnv env'
       go stmts 
 
 
@@ -56,7 +56,8 @@ eval (Ast.DeclVar ident node) = do
   return val
 
 eval (Ast.DeclFunc ident params body) = do
-  let func = Obj.Callable ident params body
+  env <- get
+  let func = Obj.Callable ident params body env
   modify $ Env.define ident func
   return Obj.Nil
 
@@ -196,9 +197,8 @@ evalBinaryArithmetic op left right = do
 
 
 call :: EvalObject -> [EvalObject] -> Evaluator
-call (Obj.Callable _ params body) args = do
-  env <- get
-  let env' = foldr (uncurry Env.define) (Env.global env) (zip params args)
+call (Obj.Callable _ params body env) args = do
+  let env' = foldr (uncurry Env.define) env (zip params args)
   case evalStateT (eval body) env' of
     Left (Err.Returning r) -> return r
     result                 -> lift result

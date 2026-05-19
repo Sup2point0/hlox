@@ -1,4 +1,6 @@
-module Hlox where
+module Hlox (
+    parse, exec,
+  ) where
 
 import Data.Bifunctor qualified as Bifunctor
 import Data.Either qualified as Either

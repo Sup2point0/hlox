@@ -22,6 +22,7 @@ library
         Parser.Ops,
         Parser.Errors,
         Evaluator,
+        Evaluator.Types,
         Evaluator.Objects,
         Evaluator.Environment,
         Evaluator.Errors,
