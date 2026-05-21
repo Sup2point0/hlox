@@ -38,12 +38,17 @@ eval :: Node -> Evaluator
 
 eval (Ast.Block nodes) = do
     env <- get
-    env' <- lift $ execStateT (go nodes) (Env.from env)
+    (res, env') <- lift $ runStateT (go nodes) (Env.from env)
     put $ Env.close env'
-    return Obj.Nil
+    return res
   where
     go :: [Ast.Node] -> EvaluatorT ScopedEnv EvalObject
     go [] = return Obj.Nil
+    go [stmt] = do
+      ScopedEnv env <- get
+      (res, env') <- lift $ runStateT (eval stmt) env
+      put $ ScopedEnv env'
+      return res
     go (stmt:stmts) = do
       ScopedEnv env <- get
       env' <- lift $ execStateT (eval stmt) env
@@ -213,7 +218,7 @@ call (Obj.Callable ident params body cenv) args = do
   let cenv' = foldr (uncurry Env.define) cenv (zip params args)
   case runStateT (eval body) cenv' of
     Left (Err.Return (r, cenv'')) -> out cenv'' (Obj.anonymiseCallable r)
-    Right (r,            cenv'')  -> out cenv'' (Obj.anonymiseCallable r)
+    Right            (r, cenv'')  -> out cenv'' (Obj.anonymiseCallable r)
     Left err                      -> lift $ Left err
   where
     out :: EvalEnv -> EvalObject -> Evaluator

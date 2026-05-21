@@ -379,4 +379,18 @@ testClosures = testCollection "closures"
       \  counter();                    \
     \")
     === Right (Obj.Number 2)
+
+    , evalProgram (parse "\
+      \  var a = 'global';   \
+      \  {                   \
+      \    fun showA() {     \
+      \      return a;        \
+      \    }                 \
+      \                      \
+      \    showA();          \
+      \    var a = 'block';  \
+      \    showA();          \
+      \  }                   \
+    \")
+    === Right (Obj.String "global")
   ]
